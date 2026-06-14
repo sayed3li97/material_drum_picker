@@ -37,14 +37,18 @@ final DateTime _today = DateTime(2024, 6, 15);
 
 void main() {
   testWidgets('generate showcase screenshot', (tester) async {
-    final roboto = FontLoader('Roboto')
-      ..addFont(_load(_robotoRegular))
-      ..addFont(_load(_robotoMedium));
-    await roboto.load();
-    final icons = FontLoader('MaterialIcons')..addFont(_load(_materialIcons));
-    await icons.load();
+    // Font loading uses real File IO / async, which deadlocks in the test's
+    // fake-async zone — do it inside runAsync.
+    await tester.runAsync(() async {
+      final roboto = FontLoader('Roboto')
+        ..addFont(_load(_robotoRegular))
+        ..addFont(_load(_robotoMedium));
+      await roboto.load();
+      final icons = FontLoader('MaterialIcons')..addFont(_load(_materialIcons));
+      await icons.load();
+    });
 
-    tester.view.physicalSize = const Size(1280, 760);
+    tester.view.physicalSize = const Size(1340, 720);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
@@ -71,14 +75,18 @@ void main() {
 
     final boundary = boundaryKey.currentContext!.findRenderObject()!
         as RenderRepaintBoundary;
-    final image = await boundary.toImage(pixelRatio: 2);
-    final bytes = await image.toByteData(format: ImageByteFormat.png);
 
-    final file = File('doc/screenshots/showcase.png');
-    await file.parent.create(recursive: true);
-    await file.writeAsBytes(bytes!.buffer.asUint8List());
-    // ignore: avoid_print
-    print('Wrote ${file.path} (${bytes.lengthInBytes ~/ 1024} KB)');
+    // toImage/toByteData need real async, which deadlocks inside the test's
+    // fake-async zone — run them via runAsync.
+    await tester.runAsync(() async {
+      final image = await boundary.toImage(pixelRatio: 2);
+      final bytes = await image.toByteData(format: ImageByteFormat.png);
+      final file = File('doc/screenshots/showcase.png');
+      await file.parent.create(recursive: true);
+      await file.writeAsBytes(bytes!.buffer.asUint8List());
+      // ignore: avoid_print
+      print('Wrote ${file.path} (${bytes.lengthInBytes ~/ 1024} KB)');
+    });
   });
 }
 
@@ -86,37 +94,42 @@ class _Showcase extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Container(
+    return Material(
       color: const Color(0xFFF1F1F8),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'material_drum_picker',
-            style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'material_drum_picker',
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Material 3 + iOS-style drum roller · drum · calendar · input · dark',
+                style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _panel('Drum mode', _drum(), false),
+                  const SizedBox(width: 16),
+                  _panel('Calendar mode', _calendar(), false),
+                  const SizedBox(width: 16),
+                  _panel('Input mode', _input(), false),
+                  const SizedBox(width: 16),
+                  _panel('Dark theme', _drum(), true),
+                ],
+              ),
+            ],
           ),
-          const SizedBox(height: 2),
-          Text(
-            'Material 3 + iOS-style drum roller · drum · calendar · input · dark',
-            style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _panel('Drum mode', _drum(), false),
-                const SizedBox(width: 16),
-                _panel('Calendar mode', _calendar(), false),
-                const SizedBox(width: 16),
-                _panel('Input mode', _input(), false),
-                const SizedBox(width: 16),
-                _panel('Dark theme', _drum(), true),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -128,6 +141,7 @@ class _Showcase extends StatelessWidget {
       child: picker,
     );
     if (dark) {
+      // A Card is itself a Material, so a dark Theme is enough to recolor it.
       card = Theme(
         data: ThemeData(
           useMaterial3: true,
@@ -135,20 +149,18 @@ class _Showcase extends StatelessWidget {
           brightness: Brightness.dark,
           colorSchemeSeed: Colors.indigo,
         ),
-        child: Builder(
-          builder: (context) => Material(
-            color: Theme.of(context).colorScheme.surface,
-            child: card,
-          ),
-        ),
+        child: card,
       );
     }
-    return Expanded(
+    return SizedBox(
+      width: 300,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              style:
+                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
           const SizedBox(height: 8),
           card,
         ],

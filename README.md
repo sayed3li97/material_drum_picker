@@ -9,6 +9,18 @@ and three context-aware input modes.
 
 ---
 
+## Showcase
+
+All four looks rendered straight from the package — drum (with day-of-week),
+calendar (quick-selects + disabled weekends), input, and dark theme:
+
+![material_drum_picker showcase](doc/screenshots/showcase.png)
+
+> Run the live demo for every option: `cd example && flutter run`, then open the
+> **Showcase** screen.
+
+---
+
 ## Features
 
 - **Drum mode** — iOS-style scroll wheel. Ideal for birth dates and expiry dates.

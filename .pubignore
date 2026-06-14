@@ -1,0 +1,8 @@
+# A .pubignore is used INSTEAD of .gitignore by `dart pub publish`, so it must
+# also re-list the build artifacts we never want in the published archive.
+.dart_tool/
+build/
+pubspec.lock
+
+# Developer-only screenshot generator — not needed by package consumers.
+tool/
