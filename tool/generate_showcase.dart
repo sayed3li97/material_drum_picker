@@ -1,0 +1,207 @@
+// Renders a multi-panel showcase of the package and writes it to
+// `doc/screenshots/showcase.png`. Run with:
+//
+//   flutter test tool/generate_showcase.dart
+//
+// It loads real fonts from the local Flutter SDK so the captured image shows
+// crisp text instead of the placeholder boxes that `flutter_test` renders by
+// default. The hardcoded font paths are intentional — this is a developer-only
+// tool, not part of the published package or the test suite.
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' show ImageByteFormat;
+
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart' show FontLoader;
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:material_drum_picker/material_drum_picker.dart';
+
+const _robotoRegular =
+    '/tmp/flutter/engine/src/flutter/txt/third_party/fonts/Roboto-Regular.ttf';
+const _robotoMedium =
+    '/tmp/flutter/engine/src/flutter/txt/third_party/fonts/Roboto-Medium.ttf';
+const _materialIcons =
+    '/tmp/flutter/engine/src/flutter/tools/font_subset/fixtures/MaterialIcons-Regular.ttf';
+
+Future<ByteData> _load(String path) async {
+  final bytes = await File(path).readAsBytes();
+  return ByteData.view(Uint8List.fromList(bytes).buffer);
+}
+
+bool _noWeekends(DateTime day) =>
+    day.weekday != DateTime.saturday && day.weekday != DateTime.sunday;
+
+final DateTime _today = DateTime(2024, 6, 15);
+
+void main() {
+  testWidgets('generate showcase screenshot', (tester) async {
+    final roboto = FontLoader('Roboto')
+      ..addFont(_load(_robotoRegular))
+      ..addFont(_load(_robotoMedium));
+    await roboto.load();
+    final icons = FontLoader('MaterialIcons')..addFont(_load(_materialIcons));
+    await icons.load();
+
+    tester.view.physicalSize = const Size(1280, 760);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final boundaryKey = GlobalKey();
+
+    await tester.pumpWidget(MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        fontFamily: 'Roboto',
+        colorSchemeSeed: Colors.indigo,
+      ),
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      supportedLocales: const [Locale('en')],
+      home: RepaintBoundary(
+        key: boundaryKey,
+        child: _Showcase(),
+      ),
+    ));
+    // Bounded pumps instead of pumpAndSettle: a focused TextField's blinking
+    // cursor never settles, so pumpAndSettle would hang.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final boundary = boundaryKey.currentContext!.findRenderObject()!
+        as RenderRepaintBoundary;
+    final image = await boundary.toImage(pixelRatio: 2);
+    final bytes = await image.toByteData(format: ImageByteFormat.png);
+
+    final file = File('doc/screenshots/showcase.png');
+    await file.parent.create(recursive: true);
+    await file.writeAsBytes(bytes!.buffer.asUint8List());
+    // ignore: avoid_print
+    print('Wrote ${file.path} (${bytes.lengthInBytes ~/ 1024} KB)');
+  });
+}
+
+class _Showcase extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      color: const Color(0xFFF1F1F8),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'material_drum_picker',
+            style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Material 3 + iOS-style drum roller · drum · calendar · input · dark',
+            style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _panel('Drum mode', _drum(), false),
+                const SizedBox(width: 16),
+                _panel('Calendar mode', _calendar(), false),
+                const SizedBox(width: 16),
+                _panel('Input mode', _input(), false),
+                const SizedBox(width: 16),
+                _panel('Dark theme', _drum(), true),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _panel(String label, Widget picker, bool dark) {
+    Widget card = Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 3,
+      child: picker,
+    );
+    if (dark) {
+      card = Theme(
+        data: ThemeData(
+          useMaterial3: true,
+          fontFamily: 'Roboto',
+          brightness: Brightness.dark,
+          colorSchemeSeed: Colors.indigo,
+        ),
+        child: Builder(
+          builder: (context) => Material(
+            color: Theme.of(context).colorScheme.surface,
+            child: card,
+          ),
+        ),
+      );
+    }
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          const SizedBox(height: 8),
+          card,
+        ],
+      ),
+    );
+  }
+
+  Widget _drum() => DrumPicker(
+        initialDate: _today,
+        currentDate: _today,
+        firstDate: DateTime(1950),
+        lastDate: DateTime(2035),
+        initialMode: DrumPickerMode.drum,
+        showModeToggle: false,
+        showActions: false,
+        showDayOfWeekInDrum: true,
+        columnOrder: DrumColumnOrder.dmy,
+        helpText: 'SELECT DATE',
+      );
+
+  Widget _calendar() => DrumPicker(
+        initialDate: _today,
+        currentDate: _today,
+        firstDate: DateTime(2024, 1, 1),
+        lastDate: DateTime(2024, 12, 31),
+        initialMode: DrumPickerMode.calendar,
+        showModeToggle: false,
+        showActions: false,
+        selectableDayPredicate: _noWeekends,
+        helpText: 'SELECT DATE',
+        quickSelectOptions: [
+          DrumQuickSelect.relative(
+              label: 'Today', offset: Duration.zero, referenceDate: _today),
+          DrumQuickSelect.relative(
+              label: 'Tomorrow',
+              offset: const Duration(days: 1),
+              referenceDate: _today),
+          DrumQuickSelect.relative(
+              label: 'Next week',
+              offset: const Duration(days: 7),
+              referenceDate: _today),
+        ],
+      );
+
+  Widget _input() => DrumPicker(
+        initialDate: _today,
+        currentDate: _today,
+        firstDate: DateTime(1950),
+        lastDate: DateTime(2035),
+        initialMode: DrumPickerMode.input,
+        showModeToggle: false,
+        showActions: false,
+        helpText: 'SELECT DATE',
+        fieldLabelText: 'Enter Date',
+      );
+}
