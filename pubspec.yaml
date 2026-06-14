@@ -1,0 +1,39 @@
+name: material_drum_picker
+description: >-
+  A Material 3 date picker with an iOS-style drum roller, full API parity with
+  showDatePicker and CupertinoDatePicker, and drum, calendar and input modes.
+version: 1.0.0
+homepage: https://github.com/sayed3li97/material_drum_picker
+repository: https://github.com/sayed3li97/material_drum_picker
+issue_tracker: https://github.com/sayed3li97/material_drum_picker/issues
+
+topics:
+  - date-picker
+  - material
+  - material-3
+  - ui
+  - widget
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+  flutter: '>=3.22.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+  flutter_localizations:
+    sdk: flutter
+  flutter_test:
+    sdk: flutter
+
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  web:
+  windows:
