@@ -34,7 +34,8 @@ class _ShowcaseScreenState extends State<ShowcaseScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Selected: ${_selected.toIso8601String().split('T').first}',
+                  Text(
+                      'Selected: ${_selected.toIso8601String().split('T').first}',
                       style: Theme.of(context).textTheme.titleMedium),
                   Text('Active mode: ${_mode.name}'),
                 ],
