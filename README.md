@@ -171,6 +171,8 @@ DrumPicker(
 )
 ```
 
+![date and time picker](doc/screenshots/datetime.png)
+
 ---
 
 ## API Reference
