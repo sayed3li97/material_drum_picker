@@ -59,4 +59,16 @@ abstract final class DrumDateUtils {
     final day = base.day.clamp(1, daysInMonth(year, month));
     return DateTime(year, month, day);
   }
+
+  /// Combines the date part of [date] with the [hour] and [minute].
+  static DateTime combine(DateTime date, int hour, int minute) =>
+      DateTime(date.year, date.month, date.day, hour, minute);
+
+  /// Snaps [minute] down to the nearest multiple of [interval].
+  ///
+  /// For example, with `interval: 15`, minute `37` becomes `30`.
+  static int snapMinute(int minute, int interval) {
+    if (interval <= 1) return minute;
+    return (minute ~/ interval) * interval;
+  }
 }

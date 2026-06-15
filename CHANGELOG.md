@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.0
+
+- **Date + time picking.** `DrumPicker` gains `pickTime`, `use24hFormat`, and
+  `minuteInterval`. When `pickTime` is true, a compact time drum strip (hour,
+  minute, and AM/PM in 12-hour mode) appears below the date selector and the
+  confirmed value includes the chosen time.
+- New `showDrumDateTimePicker` convenience function — same API as
+  `showDrumDatePicker` but returns a `DateTime` that carries the time.
+- `use24hFormat` falls back to `MediaQuery.alwaysUse24HourFormat`; AM/PM labels
+  and the header time are localized. `minuteInterval` snaps the initial minute
+  and is asserted to divide 60.
+
 ## 1.0.0
 
 Initial release.

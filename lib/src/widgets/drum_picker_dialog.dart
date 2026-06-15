@@ -34,6 +34,9 @@ Future<DateTime?> showDrumDatePicker({
   bool showDayOfWeekInDrum = false,
   bool showQuickSelects = true,
   List<DrumQuickSelect>? quickSelectOptions,
+  bool pickTime = false,
+  bool? use24hFormat,
+  int minuteInterval = 1,
   String? helpText,
   String? confirmText,
   String? cancelText,
@@ -67,6 +70,9 @@ Future<DateTime?> showDrumDatePicker({
     showDayOfWeekInDrum: showDayOfWeekInDrum,
     showQuickSelects: showQuickSelects,
     quickSelectOptions: quickSelectOptions,
+    pickTime: pickTime,
+    use24hFormat: use24hFormat,
+    minuteInterval: minuteInterval,
     helpText: helpText,
     confirmText: confirmText,
     cancelText: cancelText,
@@ -120,6 +126,9 @@ class _DrumPickerDialog extends StatelessWidget {
     required this.showDayOfWeekInDrum,
     required this.showQuickSelects,
     this.quickSelectOptions,
+    required this.pickTime,
+    this.use24hFormat,
+    required this.minuteInterval,
     this.helpText,
     this.confirmText,
     this.cancelText,
@@ -142,6 +151,9 @@ class _DrumPickerDialog extends StatelessWidget {
   final bool showDayOfWeekInDrum;
   final bool showQuickSelects;
   final List<DrumQuickSelect>? quickSelectOptions;
+  final bool pickTime;
+  final bool? use24hFormat;
+  final int minuteInterval;
   final String? helpText;
   final String? confirmText;
   final String? cancelText;
@@ -172,6 +184,9 @@ class _DrumPickerDialog extends StatelessWidget {
             showDayOfWeekInDrum: showDayOfWeekInDrum,
             showQuickSelects: showQuickSelects,
             quickSelectOptions: quickSelectOptions,
+            pickTime: pickTime,
+            use24hFormat: use24hFormat,
+            minuteInterval: minuteInterval,
             helpText: helpText,
             confirmText: confirmText,
             cancelText: cancelText,

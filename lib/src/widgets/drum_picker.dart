@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart' show DateFormat;
 
 import '../models/drum_column_order.dart';
 import '../models/drum_picker_mode.dart';
@@ -11,6 +12,7 @@ import '../utils/drum_locale_utils.dart';
 import 'internal/mode_tab_bar.dart';
 import 'internal/picker_header.dart';
 import 'internal/quick_chips.dart';
+import 'internal/time_strip.dart';
 import 'modes/calendar_mode_widget.dart';
 import 'modes/drum_mode_widget.dart';
 import 'modes/input_mode_widget.dart';
@@ -42,6 +44,9 @@ class DrumPicker extends StatefulWidget {
     this.showDayOfWeekInDrum = false,
     this.showQuickSelects = true,
     this.quickSelectOptions,
+    this.pickTime = false,
+    this.use24hFormat,
+    this.minuteInterval = 1,
     this.helpText,
     this.confirmText,
     this.cancelText,
@@ -56,8 +61,10 @@ class DrumPicker extends StatefulWidget {
     this.onConfirmed,
     this.onCancelled,
     this.onModeChanged,
-  }) : assert(!firstDate.isAfter(lastDate),
-            'firstDate must be on or before lastDate');
+  })  : assert(!firstDate.isAfter(lastDate),
+            'firstDate must be on or before lastDate'),
+        assert(
+            60 % minuteInterval == 0, 'minuteInterval must be a divisor of 60');
 
   /// The date initially selected when the picker opens.
   ///
@@ -98,6 +105,25 @@ class DrumPicker extends StatefulWidget {
 
   /// Custom quick-select options. Replaces the defaults if provided.
   final List<DrumQuickSelect>? quickSelectOptions;
+
+  /// Whether to also let the user pick a time of day.
+  ///
+  /// When true, a compact time drum strip (hour, minute, and AM/PM in
+  /// 12-hour mode) is shown below the date selector and the confirmed value
+  /// includes the selected time.
+  final bool pickTime;
+
+  /// Whether the time strip uses 24-hour format.
+  ///
+  /// When null, falls back to `MediaQuery.alwaysUse24HourFormat`. Only relevant
+  /// when [pickTime] is true.
+  final bool? use24hFormat;
+
+  /// The granularity, in minutes, of the time strip's minute column.
+  ///
+  /// Must be a divisor of 60 (e.g. 1, 5, 15). Only relevant when [pickTime]
+  /// is true.
+  final int minuteInterval;
 
   /// The label displayed at the top of the picker header.
   final String? helpText;
@@ -161,8 +187,17 @@ class _DrumPickerState extends State<DrumPicker> {
     initializeDateFormatting();
     _mode = widget.initialMode;
     final initial = widget.initialDate ?? widget.currentDate ?? DateTime.now();
-    _selectedDate =
+    final clampedDate =
         DrumDateUtils.clamp(initial, widget.firstDate, widget.lastDate);
+    if (widget.pickTime) {
+      _selectedDate = DrumDateUtils.combine(
+        clampedDate,
+        initial.hour,
+        DrumDateUtils.snapMinute(initial.minute, widget.minuteInterval),
+      );
+    } else {
+      _selectedDate = clampedDate;
+    }
   }
 
   Locale? _effectiveLocale(BuildContext context) =>
@@ -174,10 +209,19 @@ class _DrumPickerState extends State<DrumPicker> {
   }
 
   void _onDateChanged(DateTime date) {
-    final normalized = DrumDateUtils.dateOnly(date);
-    if (DrumDateUtils.isSameDay(normalized, _selectedDate)) return;
-    setState(() => _selectedDate = normalized);
-    widget.onChanged?.call(normalized);
+    final merged = widget.pickTime
+        ? DrumDateUtils.combine(date, _selectedDate.hour, _selectedDate.minute)
+        : DrumDateUtils.dateOnly(date);
+    if (merged == _selectedDate) return;
+    setState(() => _selectedDate = merged);
+    widget.onChanged?.call(merged);
+  }
+
+  void _onTimeChanged(TimeOfDay time) {
+    final merged = DrumDateUtils.combine(_selectedDate, time.hour, time.minute);
+    if (merged == _selectedDate) return;
+    setState(() => _selectedDate = merged);
+    widget.onChanged?.call(merged);
   }
 
   void _onModeChanged(DrumPickerMode mode) {
@@ -222,19 +266,36 @@ class _DrumPickerState extends State<DrumPicker> {
     final tokens = DrumPickerTheme.resolve(context);
     final localeName = DrumLocaleUtils.toIntlLocale(_effectiveLocale(context));
     final materialLocalizations = MaterialLocalizations.of(context);
+    final use24h = widget.use24hFormat ??
+        MediaQuery.maybeOf(context)?.alwaysUse24HourFormat ??
+        false;
 
     Widget content = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         PickerHeader(
-          helpText: widget.helpText ?? 'SELECT DATE',
+          helpText: widget.helpText ??
+              (widget.pickTime ? 'SELECT DATE & TIME' : 'SELECT DATE'),
           selectedDate: _selectedDate,
           tokens: tokens,
           localeName: localeName,
+          timeText: widget.pickTime
+              ? (use24h ? DateFormat.Hm(localeName) : DateFormat.jm(localeName))
+                  .format(_selectedDate)
+              : null,
         ),
         if (widget.showModeToggle)
           ModeTabBar(mode: _mode, onModeChanged: _onModeChanged),
         _buildBody(tokens, localeName),
+        if (widget.pickTime)
+          TimeStrip(
+            time: TimeOfDay.fromDateTime(_selectedDate),
+            use24hFormat: use24h,
+            minuteInterval: widget.minuteInterval,
+            tokens: tokens,
+            localeName: localeName,
+            onChanged: _onTimeChanged,
+          ),
         if (_mode == DrumPickerMode.calendar && widget.showQuickSelects)
           QuickChips(
             options: _resolveQuickSelects(),
