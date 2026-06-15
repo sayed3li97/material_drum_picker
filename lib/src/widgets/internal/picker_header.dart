@@ -15,6 +15,7 @@ class PickerHeader extends StatelessWidget {
     required this.selectedDate,
     required this.tokens,
     required this.localeName,
+    this.timeText,
   });
 
   /// The uppercase label shown above the headline date.
@@ -28,6 +29,9 @@ class PickerHeader extends StatelessWidget {
 
   /// The `intl` locale used to format the headline date.
   final String? localeName;
+
+  /// The formatted time shown beside the date, or null to hide it.
+  final String? timeText;
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +56,7 @@ class PickerHeader extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            headline,
+            timeText == null ? headline : '$headline  ·  $timeText',
             style: TextStyle(
               color: tokens.headerTextColor,
               fontSize: 30,

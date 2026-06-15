@@ -1,0 +1,89 @@
+import 'package:flutter/material.dart';
+
+import '../models/drum_column_order.dart';
+import '../models/drum_picker_mode.dart';
+import '../models/drum_quick_select.dart';
+import 'drum_picker_dialog.dart';
+
+/// Shows a [DrumPicker] that selects both a date **and** a time of day.
+///
+/// This is a thin convenience wrapper around `showDrumDatePicker` with
+/// `pickTime: true`. The returned [DateTime] carries the chosen hour and
+/// minute; `null` is returned if the user cancels or dismisses the dialog.
+///
+/// ```dart
+/// final when = await showDrumDateTimePicker(
+///   context: context,
+///   firstDate: DateTime(2020),
+///   lastDate: DateTime(2030),
+///   minuteInterval: 15,
+/// );
+/// ```
+Future<DateTime?> showDrumDateTimePicker({
+  required BuildContext context,
+  required DateTime firstDate,
+  required DateTime lastDate,
+  DateTime? initialDate,
+  DateTime? currentDate,
+  SelectableDayPredicate? selectableDayPredicate,
+  DrumPickerMode initialMode = DrumPickerMode.drum,
+  bool showModeToggle = true,
+  DrumColumnOrder? columnOrder,
+  bool showDayOfWeekInDrum = false,
+  bool showQuickSelects = true,
+  List<DrumQuickSelect>? quickSelectOptions,
+  bool? use24hFormat,
+  int minuteInterval = 1,
+  String? helpText,
+  String? confirmText,
+  String? cancelText,
+  String? errorFormatText,
+  String? errorInvalidText,
+  String? fieldHintText,
+  String? fieldLabelText,
+  Locale? locale,
+  TextDirection? textDirection,
+  bool barrierDismissible = true,
+  Color? barrierColor,
+  String? barrierLabel,
+  bool useRootNavigator = true,
+  RouteSettings? routeSettings,
+  String? restorationId,
+  Offset? anchorPoint,
+  TransitionBuilder? builder,
+}) {
+  return showDrumDatePicker(
+    context: context,
+    firstDate: firstDate,
+    lastDate: lastDate,
+    initialDate: initialDate,
+    currentDate: currentDate,
+    selectableDayPredicate: selectableDayPredicate,
+    initialMode: initialMode,
+    showModeToggle: showModeToggle,
+    columnOrder: columnOrder,
+    showDayOfWeekInDrum: showDayOfWeekInDrum,
+    showQuickSelects: showQuickSelects,
+    quickSelectOptions: quickSelectOptions,
+    pickTime: true,
+    use24hFormat: use24hFormat,
+    minuteInterval: minuteInterval,
+    helpText: helpText,
+    confirmText: confirmText,
+    cancelText: cancelText,
+    errorFormatText: errorFormatText,
+    errorInvalidText: errorInvalidText,
+    fieldHintText: fieldHintText,
+    fieldLabelText: fieldLabelText,
+    locale: locale,
+    textDirection: textDirection,
+    barrierDismissible: barrierDismissible,
+    barrierColor: barrierColor,
+    barrierLabel: barrierLabel,
+    useRootNavigator: useRootNavigator,
+    routeSettings: routeSettings,
+    restorationId: restorationId,
+    anchorPoint: anchorPoint,
+    builder: builder,
+  );
+}

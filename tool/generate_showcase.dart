@@ -48,7 +48,7 @@ void main() {
       await icons.load();
     });
 
-    tester.view.physicalSize = const Size(1340, 720);
+    tester.view.physicalSize = const Size(1660, 860);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
@@ -110,7 +110,7 @@ class _Showcase extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                'Material 3 + iOS-style drum roller · drum · calendar · input · dark',
+                'Material 3 + iOS-style drum roller · drum · calendar · input · date+time · dark',
                 style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant),
               ),
               const SizedBox(height: 16),
@@ -123,6 +123,8 @@ class _Showcase extends StatelessWidget {
                   _panel('Calendar mode', _calendar(), false),
                   const SizedBox(width: 16),
                   _panel('Input mode', _input(), false),
+                  const SizedBox(width: 16),
+                  _panel('Date + time', _dateTime(), false),
                   const SizedBox(width: 16),
                   _panel('Dark theme', _drum(), true),
                 ],
@@ -203,6 +205,21 @@ class _Showcase extends StatelessWidget {
               offset: const Duration(days: 7),
               referenceDate: _today),
         ],
+      );
+
+  Widget _dateTime() => DrumPicker(
+        initialDate: DateTime(2024, 6, 15, 14, 30),
+        currentDate: _today,
+        firstDate: DateTime(1950),
+        lastDate: DateTime(2035),
+        initialMode: DrumPickerMode.drum,
+        showModeToggle: false,
+        showActions: false,
+        pickTime: true,
+        use24hFormat: true,
+        minuteInterval: 5,
+        columnOrder: DrumColumnOrder.dmy,
+        helpText: 'SELECT DATE & TIME',
       );
 
   Widget _input() => DrumPicker(

@@ -11,8 +11,9 @@ and three context-aware input modes.
 
 ## Showcase
 
-All four looks rendered straight from the package — drum (with day-of-week),
-calendar (quick-selects + disabled weekends), input, and dark theme:
+All the looks rendered straight from the package — drum (with day-of-week),
+calendar (quick-selects + disabled weekends), input, date + time, and dark
+theme:
 
 ![material_drum_picker showcase](doc/screenshots/showcase.png)
 
@@ -27,6 +28,9 @@ calendar (quick-selects + disabled weekends), input, and dark theme:
 - **Calendar mode** — M3 calendar grid with year navigation and configurable
   quick-select chips.
 - **Input mode** — keyboard text field with live `MM/DD/YYYY` validation.
+- **Date + time** — opt in with `pickTime: true` (or `showDrumDateTimePicker`)
+  to add an hour/minute (+ AM/PM) drum strip, with `use24hFormat` and
+  `minuteInterval`.
 - **Full API parity** with `showDatePicker` + `CupertinoDatePicker` — every
   shared parameter keeps the same name for a friction-free migration.
 - **`selectableDayPredicate`** — disable weekends, holidays, or any custom rule,
@@ -141,6 +145,32 @@ showDrumDatePicker(
 );
 ```
 
+### Date + time
+
+```dart
+final when = await showDrumDateTimePicker(
+  context: context,
+  firstDate: DateTime(2020),
+  lastDate: DateTime(2030),
+  use24hFormat: true,   // null → follows MediaQuery.alwaysUse24HourFormat
+  minuteInterval: 15,   // 0, 15, 30, 45
+);
+// `when` is a DateTime carrying the chosen hour and minute.
+```
+
+Or inline, embedded in a form:
+
+```dart
+DrumPicker(
+  firstDate: DateTime(2020),
+  lastDate: DateTime(2030),
+  pickTime: true,
+  minuteInterval: 5,
+  showActions: false,
+  onChanged: (dateTime) => setState(() => _value = dateTime),
+)
+```
+
 ---
 
 ## API Reference
@@ -161,6 +191,9 @@ showDrumDatePicker(
 | `showDayOfWeekInDrum` | `bool` | `false` | Show weekday in drum day column |
 | `showQuickSelects` | `bool` | `true` | Show quick-select chips |
 | `quickSelectOptions` | `List<DrumQuickSelect>?` | Today/Tomorrow/+7d | Custom chips |
+| `pickTime` | `bool` | `false` | Also pick a time of day |
+| `use24hFormat` | `bool?` | ambient | 24-hour time strip (no AM/PM) |
+| `minuteInterval` | `int` | `1` | Minute granularity (divisor of 60) |
 | `helpText` | `String?` | `'SELECT DATE'` | Header label |
 | `confirmText` | `String?` | `'OK'` | Confirm button text |
 | `cancelText` | `String?` | `'Cancel'` | Cancel button text |
@@ -263,8 +296,8 @@ showDrumDatePicker(
 ## Roadmap
 
 - **v1.0** — Single date picker (drum + calendar + input modes).
-- **v1.1** — `showDrumDateRangePicker` (date range selection).
-- **v1.2** — Time-picker drum column (date + time combined).
+- **v1.1** — Combined date + time picking (`pickTime`, `showDrumDateTimePicker`).
+- **next** — `showDrumDateRangePicker` (date range selection).
 
 ---
 

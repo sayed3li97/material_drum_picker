@@ -109,4 +109,26 @@ void main() {
           DrumDateUtils.monthCount(DateTime(2024, 11), DateTime(2025, 2)), 4);
     });
   });
+
+  group('DrumDateUtils.combine', () {
+    test('merges the date part with the given hour and minute', () {
+      expect(
+        DrumDateUtils.combine(DateTime(2024, 6, 15, 1, 2), 14, 30),
+        DateTime(2024, 6, 15, 14, 30),
+      );
+    });
+  });
+
+  group('DrumDateUtils.snapMinute', () {
+    test('returns the minute unchanged for interval 1', () {
+      expect(DrumDateUtils.snapMinute(37, 1), 37);
+    });
+
+    test('snaps down to the nearest multiple of the interval', () {
+      expect(DrumDateUtils.snapMinute(37, 15), 30);
+      expect(DrumDateUtils.snapMinute(44, 15), 30);
+      expect(DrumDateUtils.snapMinute(45, 15), 45);
+      expect(DrumDateUtils.snapMinute(7, 5), 5);
+    });
+  });
 }
