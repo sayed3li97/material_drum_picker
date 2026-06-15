@@ -1,0 +1,191 @@
+import 'package:flutter/material.dart';
+
+import '../models/drum_column_order.dart';
+import '../models/drum_picker_mode.dart';
+import '../models/drum_quick_select.dart';
+import 'drum_picker.dart';
+
+/// Shows a [DrumPicker] in a Material Design 3 dialog.
+///
+/// This function mirrors Flutter's `showDatePicker` so that developers familiar
+/// with the built-in picker can adopt it with zero learning curve. Every shared
+/// parameter keeps the same name.
+///
+/// Returns the selected [DateTime], or `null` if the user cancels or dismisses
+/// the dialog by tapping the barrier.
+///
+/// ```dart
+/// final picked = await showDrumDatePicker(
+///   context: context,
+///   firstDate: DateTime(1900),
+///   lastDate: DateTime(2100),
+/// );
+/// ```
+Future<DateTime?> showDrumDatePicker({
+  required BuildContext context,
+  required DateTime firstDate,
+  required DateTime lastDate,
+  DateTime? initialDate,
+  DateTime? currentDate,
+  SelectableDayPredicate? selectableDayPredicate,
+  DrumPickerMode initialMode = DrumPickerMode.drum,
+  bool showModeToggle = true,
+  DrumColumnOrder? columnOrder,
+  bool showDayOfWeekInDrum = false,
+  bool showQuickSelects = true,
+  List<DrumQuickSelect>? quickSelectOptions,
+  String? helpText,
+  String? confirmText,
+  String? cancelText,
+  String? errorFormatText,
+  String? errorInvalidText,
+  String? fieldHintText,
+  String? fieldLabelText,
+  Locale? locale,
+  TextDirection? textDirection,
+  bool barrierDismissible = true,
+  Color? barrierColor,
+  String? barrierLabel,
+  bool useRootNavigator = true,
+  RouteSettings? routeSettings,
+  String? restorationId,
+  Offset? anchorPoint,
+  TransitionBuilder? builder,
+}) {
+  assert(
+      !firstDate.isAfter(lastDate), 'firstDate must be on or before lastDate');
+
+  Widget dialog = _DrumPickerDialog(
+    initialDate: initialDate,
+    firstDate: firstDate,
+    lastDate: lastDate,
+    currentDate: currentDate,
+    selectableDayPredicate: selectableDayPredicate,
+    initialMode: initialMode,
+    showModeToggle: showModeToggle,
+    columnOrder: columnOrder,
+    showDayOfWeekInDrum: showDayOfWeekInDrum,
+    showQuickSelects: showQuickSelects,
+    quickSelectOptions: quickSelectOptions,
+    helpText: helpText,
+    confirmText: confirmText,
+    cancelText: cancelText,
+    errorFormatText: errorFormatText,
+    errorInvalidText: errorInvalidText,
+    fieldHintText: fieldHintText,
+    fieldLabelText: fieldLabelText,
+    locale: locale,
+    textDirection: textDirection,
+  );
+
+  if (locale != null) {
+    dialog = Localizations.override(
+      context: context,
+      locale: locale,
+      child: dialog,
+    );
+  }
+  if (textDirection != null) {
+    dialog = Directionality(textDirection: textDirection, child: dialog);
+  }
+  if (builder != null) {
+    final wrapped = dialog;
+    dialog = Builder(builder: (context) => builder(context, wrapped));
+  }
+
+  return showDialog<DateTime>(
+    context: context,
+    barrierDismissible: barrierDismissible,
+    barrierColor: barrierColor,
+    barrierLabel: barrierLabel,
+    useRootNavigator: useRootNavigator,
+    routeSettings: routeSettings,
+    anchorPoint: anchorPoint,
+    builder: (context) => dialog,
+  );
+}
+
+/// Internal dialog wrapper that wires the picker's confirm/cancel callbacks to
+/// [Navigator.pop].
+class _DrumPickerDialog extends StatelessWidget {
+  const _DrumPickerDialog({
+    required this.firstDate,
+    required this.lastDate,
+    this.initialDate,
+    this.currentDate,
+    this.selectableDayPredicate,
+    required this.initialMode,
+    required this.showModeToggle,
+    this.columnOrder,
+    required this.showDayOfWeekInDrum,
+    required this.showQuickSelects,
+    this.quickSelectOptions,
+    this.helpText,
+    this.confirmText,
+    this.cancelText,
+    this.errorFormatText,
+    this.errorInvalidText,
+    this.fieldHintText,
+    this.fieldLabelText,
+    this.locale,
+    this.textDirection,
+  });
+
+  final DateTime? initialDate;
+  final DateTime firstDate;
+  final DateTime lastDate;
+  final DateTime? currentDate;
+  final SelectableDayPredicate? selectableDayPredicate;
+  final DrumPickerMode initialMode;
+  final bool showModeToggle;
+  final DrumColumnOrder? columnOrder;
+  final bool showDayOfWeekInDrum;
+  final bool showQuickSelects;
+  final List<DrumQuickSelect>? quickSelectOptions;
+  final String? helpText;
+  final String? confirmText;
+  final String? cancelText;
+  final String? errorFormatText;
+  final String? errorInvalidText;
+  final String? fieldHintText;
+  final String? fieldLabelText;
+  final Locale? locale;
+  final TextDirection? textDirection;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      clipBehavior: Clip.antiAlias,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360, maxHeight: 560),
+        child: SingleChildScrollView(
+          child: DrumPicker(
+            initialDate: initialDate,
+            firstDate: firstDate,
+            lastDate: lastDate,
+            currentDate: currentDate,
+            selectableDayPredicate: selectableDayPredicate,
+            initialMode: initialMode,
+            showModeToggle: showModeToggle,
+            columnOrder: columnOrder,
+            showDayOfWeekInDrum: showDayOfWeekInDrum,
+            showQuickSelects: showQuickSelects,
+            quickSelectOptions: quickSelectOptions,
+            helpText: helpText,
+            confirmText: confirmText,
+            cancelText: cancelText,
+            errorFormatText: errorFormatText,
+            errorInvalidText: errorInvalidText,
+            fieldHintText: fieldHintText,
+            fieldLabelText: fieldLabelText,
+            locale: locale,
+            textDirection: textDirection,
+            onConfirmed: (date) => Navigator.of(context).pop(date),
+            onCancelled: () => Navigator.of(context).pop(),
+          ),
+        ),
+      ),
+    );
+  }
+}
