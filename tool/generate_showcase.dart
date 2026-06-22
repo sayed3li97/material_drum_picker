@@ -37,56 +37,80 @@ final DateTime _today = DateTime(2024, 6, 15);
 
 void main() {
   testWidgets('generate showcase screenshot', (tester) async {
-    // Font loading uses real File IO / async, which deadlocks in the test's
-    // fake-async zone — do it inside runAsync.
-    await tester.runAsync(() async {
-      final roboto = FontLoader('Roboto')
-        ..addFont(_load(_robotoRegular))
-        ..addFont(_load(_robotoMedium));
-      await roboto.load();
-      final icons = FontLoader('MaterialIcons')..addFont(_load(_materialIcons));
-      await icons.load();
-    });
+    await _capture(
+      tester,
+      const Size(1660, 860),
+      'doc/screenshots/showcase.png',
+      _Showcase(),
+    );
+  });
 
-    tester.view.physicalSize = const Size(1660, 860);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.reset);
+  testWidgets('generate date+time screenshot', (tester) async {
+    await _capture(
+      tester,
+      const Size(720, 820),
+      'doc/screenshots/datetime.png',
+      _DateTimeShowcase(),
+    );
+  });
+}
 
-    final boundaryKey = GlobalKey();
+Future<void> _loadFonts(WidgetTester tester) async {
+  // Font loading uses real File IO / async, which deadlocks in the test's
+  // fake-async zone — do it inside runAsync.
+  await tester.runAsync(() async {
+    final roboto = FontLoader('Roboto')
+      ..addFont(_load(_robotoRegular))
+      ..addFont(_load(_robotoMedium));
+    await roboto.load();
+    final icons = FontLoader('MaterialIcons')..addFont(_load(_materialIcons));
+    await icons.load();
+  });
+}
 
-    await tester.pumpWidget(MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        fontFamily: 'Roboto',
-        colorSchemeSeed: Colors.indigo,
-      ),
-      localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      supportedLocales: const [Locale('en')],
-      home: RepaintBoundary(
-        key: boundaryKey,
-        child: _Showcase(),
-      ),
-    ));
-    // Bounded pumps instead of pumpAndSettle: a focused TextField's blinking
-    // cursor never settles, so pumpAndSettle would hang.
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
+Future<void> _capture(
+  WidgetTester tester,
+  Size size,
+  String path,
+  Widget child,
+) async {
+  await _loadFonts(tester);
 
-    final boundary = boundaryKey.currentContext!.findRenderObject()!
-        as RenderRepaintBoundary;
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
 
-    // toImage/toByteData need real async, which deadlocks inside the test's
-    // fake-async zone — run them via runAsync.
-    await tester.runAsync(() async {
-      final image = await boundary.toImage(pixelRatio: 2);
-      final bytes = await image.toByteData(format: ImageByteFormat.png);
-      final file = File('doc/screenshots/showcase.png');
-      await file.parent.create(recursive: true);
-      await file.writeAsBytes(bytes!.buffer.asUint8List());
-      // ignore: avoid_print
-      print('Wrote ${file.path} (${bytes.lengthInBytes ~/ 1024} KB)');
-    });
+  final boundaryKey = GlobalKey();
+
+  await tester.pumpWidget(MaterialApp(
+    debugShowCheckedModeBanner: false,
+    theme: ThemeData(
+      useMaterial3: true,
+      fontFamily: 'Roboto',
+      colorSchemeSeed: Colors.indigo,
+    ),
+    localizationsDelegates: GlobalMaterialLocalizations.delegates,
+    supportedLocales: const [Locale('en')],
+    home: RepaintBoundary(key: boundaryKey, child: child),
+  ));
+  // Bounded pumps instead of pumpAndSettle: a focused TextField's blinking
+  // cursor never settles, so pumpAndSettle would hang.
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 500));
+
+  final boundary =
+      boundaryKey.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+
+  // toImage/toByteData need real async, which deadlocks inside the test's
+  // fake-async zone — run them via runAsync.
+  await tester.runAsync(() async {
+    final image = await boundary.toImage(pixelRatio: 2);
+    final bytes = await image.toByteData(format: ImageByteFormat.png);
+    final file = File(path);
+    await file.parent.create(recursive: true);
+    await file.writeAsBytes(bytes!.buffer.asUint8List());
+    // ignore: avoid_print
+    print('Wrote ${file.path} (${bytes.lengthInBytes ~/ 1024} KB)');
   });
 }
 
@@ -233,4 +257,80 @@ class _Showcase extends StatelessWidget {
         helpText: 'SELECT DATE',
         fieldLabelText: 'Enter Date',
       );
+}
+
+/// A focused two-panel close-up of the date + time picker (12- and 24-hour).
+class _DateTimeShowcase extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: const Color(0xFFF1F1F8),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Date + time',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'A drum date selector with an hour / minute (+ AM/PM) time strip',
+                style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _panel('12-hour', use24h: false),
+                  const SizedBox(width: 16),
+                  _panel('24-hour, 5-min steps', use24h: true),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _panel(String label, {required bool use24h}) {
+    return SizedBox(
+      width: 300,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              style:
+                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          const SizedBox(height: 8),
+          Card(
+            clipBehavior: Clip.antiAlias,
+            elevation: 3,
+            child: DrumPicker(
+              initialDate: DateTime(2024, 6, 15, 14, 30),
+              currentDate: _today,
+              firstDate: DateTime(1950),
+              lastDate: DateTime(2035),
+              initialMode: DrumPickerMode.drum,
+              showModeToggle: false,
+              showActions: false,
+              pickTime: true,
+              use24hFormat: use24h,
+              minuteInterval: use24h ? 5 : 1,
+              columnOrder: DrumColumnOrder.dmy,
+              helpText: 'SELECT DATE & TIME',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
