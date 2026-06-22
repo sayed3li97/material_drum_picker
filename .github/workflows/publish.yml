@@ -1,0 +1,22 @@
+name: Publish to pub.dev
+
+# Publishes the package when a semver tag like v1.2.0 is pushed.
+#
+# This uses pub.dev automated publishing (OIDC), so there are no long lived
+# secrets. Before the first run, enable automated publishing for the package
+# on pub.dev (Admin tab) and allow this repository with a tag pattern of
+# v{{version}}.
+# See https://dart.dev/tools/pub/automated-publishing for details.
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  publish:
+    permissions:
+      id-token: write # required for OIDC authentication to pub.dev
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
+    with:
+      environment: pub.dev

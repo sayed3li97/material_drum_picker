@@ -4,5 +4,8 @@
 build/
 pubspec.lock
 
-# Developer-only screenshot generator — not needed by package consumers.
+# Developer-only screenshot generator, not needed by package consumers.
 tool/
+
+# CI, automation, and issue templates are not part of the published package.
+.github/

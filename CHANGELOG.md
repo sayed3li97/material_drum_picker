@@ -17,7 +17,7 @@
   `minuteInterval`. When `pickTime` is true, a compact time drum strip (hour,
   minute, and AM/PM in 12-hour mode) appears below the date selector and the
   confirmed value includes the chosen time.
-- New `showDrumDateTimePicker` convenience function — same API as
+- New `showDrumDateTimePicker` convenience function, the same API as
   `showDrumDatePicker` but returns a `DateTime` that carries the time.
 - `use24hFormat` falls back to `MediaQuery.alwaysUse24HourFormat`; AM/PM labels
   and the header time are localized. `minuteInterval` snaps the initial minute
@@ -27,7 +27,7 @@
 
 Initial release.
 
-- `showDrumDatePicker` — a drop-in replacement for Flutter's `showDatePicker`
+- `showDrumDatePicker`, a drop-in replacement for Flutter's `showDatePicker`
   with full parameter parity (`firstDate`, `lastDate`, `initialDate`,
   `currentDate`, `selectableDayPredicate`, `helpText`, `confirmText`,
   `cancelText`, `errorFormatText`, `errorInvalidText`, `fieldHintText`,
