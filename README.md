@@ -17,7 +17,7 @@ Every look below is rendered straight from the package: the drum mode (with
 day of week), the calendar mode (quick selects plus disabled weekends), the
 keyboard input mode, a combined date and time picker, and a dark theme.
 
-![material_drum_picker showcase](doc/screenshots/showcase.png)
+![material_drum_picker showcase](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/showcase.png)
 
 Run the live demo for every option with `cd example && flutter run`, then open
 the **Showcase** screen.
@@ -62,11 +62,11 @@ Each function has an inline widget equivalent (`DrumPicker` and
 
 ### Date and time
 
-![date and time picker](doc/screenshots/datetime.png)
+![date and time picker](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/datetime.png)
 
 ### Time only
 
-![time picker](doc/screenshots/time.png)
+![time picker](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/time.png)
 
 ## Installation
 

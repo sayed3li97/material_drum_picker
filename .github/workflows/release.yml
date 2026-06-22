@@ -1,0 +1,71 @@
+name: Release on merge to main
+
+# When a pull request is merged into main, this workflow reads the version from
+# pubspec.yaml and, if that version is not yet on pub.dev, tags it as vX.Y.Z.
+# Pushing the tag triggers the "Publish to pub.dev" workflow, which performs the
+# actual publish via pub.dev automated publishing (OIDC).
+#
+# One-time setup:
+#   1. pub.dev: package Admin tab, enable automated publishing from GitHub
+#      Actions, repository sayed3li97/material_drum_picker, tag pattern
+#      v{{version}}.
+#   2. GitHub: add a repository secret named RELEASE_PAT, a fine-grained
+#      personal access token with "Contents: read and write" on this repo. The
+#      default GITHUB_TOKEN cannot be used here because tags it pushes do not
+#      trigger the publish workflow.
+#
+# To cut a release: bump `version` in pubspec.yaml, update CHANGELOG.md, and
+# merge to main. Re-running with an already published version is a safe no-op.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  tag-release:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Decide whether to release
+        id: decide
+        run: |
+          version=$(grep '^version:' pubspec.yaml | head -1 \
+            | sed 's/version:[[:space:]]*//' | tr -d '[:space:]')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $version"
+
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            "https://pub.dev/api/packages/material_drum_picker/versions/$version")
+          if [ "$code" = "200" ]; then
+            echo "Version $version is already on pub.dev. Nothing to do."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          elif git rev-parse "v$version" >/dev/null 2>&1; then
+            echo "Tag v$version already exists. Nothing to do."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create and push tag
+        if: steps.decide.outputs.release == 'true'
+        env:
+          RELEASE_PAT: ${{ secrets.RELEASE_PAT }}
+        run: |
+          if [ -z "$RELEASE_PAT" ]; then
+            echo "::error::RELEASE_PAT secret is not set. Add a fine-grained PAT with Contents:write so the tag push can trigger the publish workflow."
+            exit 1
+          fi
+          tag="v${{ steps.decide.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "Release $tag"
+          git remote set-url origin \
+            "https://x-access-token:${RELEASE_PAT}@github.com/${{ github.repository }}.git"
+          git push origin "$tag"
+          echo "Pushed $tag. The Publish to pub.dev workflow will take it from here."

@@ -80,11 +80,27 @@ CI (the project uses `ubuntu-22.04`).
 
 ## Releasing (maintainers)
 
+Releases are automated. To ship a new version:
+
 1. Update the version in `pubspec.yaml` and add a `CHANGELOG.md` entry.
 2. Merge to `main`.
-3. Tag the release: `git tag v1.2.0 && git push origin v1.2.0`.
-4. The `Publish to pub.dev` workflow publishes the tagged version through
-   pub.dev automated publishing.
+
+On merge, the `Release on merge to main` workflow checks pub.dev and, when the
+version is new, tags it `vX.Y.Z`. That tag triggers `Publish to pub.dev`, which
+publishes through pub.dev automated publishing (OIDC). Merging without a version
+bump is a safe no-op.
+
+One-time setup required for the automation:
+
+- **pub.dev**: package Admin tab, enable automated publishing from GitHub
+  Actions for `sayed3li97/material_drum_picker` with tag pattern `v{{version}}`.
+- **GitHub**: add a repository secret `RELEASE_PAT`, a fine-grained personal
+  access token with `Contents: read and write` on this repo. It is needed so the
+  auto-created tag can trigger the publish workflow (the default `GITHUB_TOKEN`
+  cannot trigger one workflow from another).
+
+You can still cut a release by hand if preferred: `git tag v1.2.0 && git push
+origin v1.2.0`.
 
 ## License
 
