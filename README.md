@@ -3,59 +3,76 @@
 [![pub package](https://img.shields.io/pub/v/material_drum_picker.svg)](https://pub.dev/packages/material_drum_picker)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A Material Design 3 date picker with an iOS-style drum roller, full API parity
-with Flutter's `showDatePicker` and `CupertinoDatePicker`, M3 Expressive tokens,
-and three context-aware input modes.
-
----
+A Material Design 3 date, time, and date+time picker with an iOS style drum
+roller. It offers full API parity with Flutter's `showDatePicker` and
+`CupertinoDatePicker`, uses Material 3 color tokens, and ships three context
+aware date modes (drum, calendar, and keyboard input).
 
 ## Showcase
 
-All the looks rendered straight from the package — drum (with day-of-week),
-calendar (quick-selects + disabled weekends), input, date + time, and dark
-theme:
+Every look below is rendered straight from the package: the drum mode (with
+day of week), the calendar mode (quick selects plus disabled weekends), the
+keyboard input mode, a combined date and time picker, and a dark theme.
 
 ![material_drum_picker showcase](doc/screenshots/showcase.png)
 
-> Run the live demo for every option: `cd example && flutter run`, then open the
-> **Showcase** screen.
-
----
+Run the live demo for every option with `cd example && flutter run`, then open
+the **Showcase** screen.
 
 ## Features
 
-- **Drum mode** — iOS-style scroll wheel. Ideal for birth dates and expiry dates.
-- **Calendar mode** — M3 calendar grid with year navigation and configurable
-  quick-select chips.
-- **Input mode** — keyboard text field with live `MM/DD/YYYY` validation.
-- **Date + time** — opt in with `pickTime: true` (or `showDrumDateTimePicker`)
-  to add an hour/minute (+ AM/PM) drum strip, with `use24hFormat` and
-  `minuteInterval`.
-- **Full API parity** with `showDatePicker` + `CupertinoDatePicker` — every
-  shared parameter keeps the same name for a friction-free migration.
-- **`selectableDayPredicate`** — disable weekends, holidays, or any custom rule,
-  enforced in **all three** modes.
-- **`quickSelectOptions`** — custom chips (Today, Next Monday, +3 Days, …).
-- **`columnOrder`** — Day–Month–Year, Month–Day–Year, or Year–Month–Day.
-- **`showDayOfWeekInDrum`** — show the abbreviated weekday in the drum day column.
-- **Full M3 theming** — uses `ColorScheme` tokens; no hardcoded colors. Override
-  per-app via the `DrumPickerTheme` extension.
-- **RTL support** — Arabic, Hebrew, Persian. Weekday and column order auto-flip.
-- **Zero runtime dependencies** beyond Flutter and `intl`.
-- **All 6 platforms** — Android, iOS, Web, macOS, Windows, Linux.
-- **Accessibility** — 44dp touch targets, keyboard navigation in the calendar,
-  screen-reader semantics, and reduced-motion compliance.
+- **Drum mode.** An iOS style scroll wheel. Ideal for birth dates and expiry
+  dates.
+- **Calendar mode.** A Material 3 calendar grid with year navigation and
+  configurable quick select chips.
+- **Input mode.** A keyboard text field with live `MM/DD/YYYY` validation.
+- **Date and time.** Opt in with `pickTime: true` (or `showDrumDateTimePicker`)
+  to add an hour and minute drum, plus an AM/PM column in 12 hour mode.
+- **Time only.** Use `DrumTimePicker` or `showDrumTimePicker` to pick just a
+  `TimeOfDay`, configurable for AM/PM or 24 hour mode.
+- **Full API parity** with `showDatePicker` and `CupertinoDatePicker`. Shared
+  parameters keep the same names so migration is a one line change.
+- **`selectableDayPredicate`** to disable weekends, holidays, or any custom
+  rule, enforced in all three date modes.
+- **`quickSelectOptions`** for custom chips such as Today, Next Monday, or
+  +3 Days.
+- **`columnOrder`** for Day/Month/Year, Month/Day/Year, or Year/Month/Day.
+- **Material 3 theming** through `ColorScheme` tokens, with per app overrides
+  via the `DrumPickerTheme` extension.
+- **Right to left support** for Arabic, Hebrew, and Persian, with the weekday
+  and column order flipping automatically.
+- **Accessibility:** 44dp touch targets, keyboard navigation in the calendar,
+  screen reader semantics, and reduced motion support.
+- **All six platforms:** Android, iOS, web, macOS, Windows, and Linux.
+- Zero runtime dependencies beyond Flutter and `intl`.
 
----
+## Pickers at a glance
+
+| Function | Returns | Use it for |
+|---|---|---|
+| `showDrumDatePicker` | `DateTime?` | A date |
+| `showDrumDateTimePicker` | `DateTime?` | A date and a time |
+| `showDrumTimePicker` | `TimeOfDay?` | A time only |
+
+Each function has an inline widget equivalent (`DrumPicker` and
+`DrumTimePicker`) for embedding in a form without a dialog.
+
+### Date and time
+
+![date and time picker](doc/screenshots/datetime.png)
+
+### Time only
+
+![time picker](doc/screenshots/time.png)
 
 ## Installation
 
 ```yaml
 dependencies:
-  material_drum_picker: ^1.0.0
+  material_drum_picker: ^1.2.0
 ```
 
-Add `flutter_localizations` to your app if you haven't already:
+Add `flutter_localizations` to your app if you have not already:
 
 ```yaml
 dependencies:
@@ -63,7 +80,7 @@ dependencies:
     sdk: flutter
 ```
 
-And register the delegates in your `MaterialApp`:
+Then register the delegates in your `MaterialApp`:
 
 ```dart
 MaterialApp(
@@ -72,11 +89,9 @@ MaterialApp(
 )
 ```
 
----
+## Quick start
 
-## Quick Start
-
-### Drop-in replacement for `showDatePicker`
+### A date (drop in replacement for showDatePicker)
 
 ```dart
 import 'package:material_drum_picker/material_drum_picker.dart';
@@ -88,22 +103,58 @@ final DateTime? picked = await showDrumDatePicker(
 );
 ```
 
+### A time only
+
+```dart
+final TimeOfDay? time = await showDrumTimePicker(
+  context: context,
+  initialTime: TimeOfDay.now(),
+  use24hFormat: true,   // null follows MediaQuery.alwaysUse24HourFormat
+  minuteInterval: 5,    // 0, 5, 10, ...
+);
+```
+
+Inline, embedded in a form:
+
+```dart
+DrumTimePicker(
+  initialTime: const TimeOfDay(hour: 9, minute: 0),
+  use24hFormat: false,  // shows an AM/PM column
+  minuteInterval: 15,
+  showActions: false,
+  onChanged: (time) => setState(() => _time = time),
+)
+```
+
+### A date and time
+
+```dart
+final DateTime? when = await showDrumDateTimePicker(
+  context: context,
+  firstDate: DateTime(2020),
+  lastDate: DateTime(2030),
+  use24hFormat: true,
+  minuteInterval: 15,
+);
+// `when` carries the chosen hour and minute.
+```
+
 ### Birth date picker
 
 ```dart
 final today = DateTime.now();
 final birthDate = await showDrumDatePicker(
   context: context,
-  initialMode: DrumPickerMode.drum,        // drum wheel for distant dates
+  initialMode: DrumPickerMode.drum,        // a wheel for distant dates
   firstDate: DateTime(today.year - 120),
   lastDate: DateTime(today.year - 18, today.month, today.day),
-  columnOrder: DrumColumnOrder.dmy,        // Day–Month–Year
+  columnOrder: DrumColumnOrder.dmy,        // Day, Month, Year
   showModeToggle: false,                   // lock to drum mode
   helpText: 'SELECT BIRTH DATE',
 );
 ```
 
-### Appointment picker — no weekends
+### Appointment picker without weekends
 
 ```dart
 final appointment = await showDrumDatePicker(
@@ -115,19 +166,6 @@ final appointment = await showDrumDatePicker(
       day.weekday != DateTime.saturday && day.weekday != DateTime.sunday,
   confirmText: 'BOOK APPOINTMENT',
 );
-```
-
-### Inline widget — embedded in a form
-
-```dart
-DrumPicker(
-  firstDate: DateTime.now(),
-  lastDate: DateTime(2040),
-  initialMode: DrumPickerMode.drum,
-  showActions: false,        // no Cancel/OK — use your own form submit
-  showModeToggle: false,
-  onChanged: (date) => setState(() => _expiryDate = date),
-)
 ```
 
 ### Custom quick selects
@@ -145,61 +183,31 @@ showDrumDatePicker(
 );
 ```
 
-### Date + time
+## API reference
 
-```dart
-final when = await showDrumDateTimePicker(
-  context: context,
-  firstDate: DateTime(2020),
-  lastDate: DateTime(2030),
-  use24hFormat: true,   // null → follows MediaQuery.alwaysUse24HourFormat
-  minuteInterval: 15,   // 0, 15, 30, 45
-);
-// `when` is a DateTime carrying the chosen hour and minute.
-```
-
-Or inline, embedded in a form:
-
-```dart
-DrumPicker(
-  firstDate: DateTime(2020),
-  lastDate: DateTime(2030),
-  pickTime: true,
-  minuteInterval: 5,
-  showActions: false,
-  onChanged: (dateTime) => setState(() => _value = dateTime),
-)
-```
-
-![date and time picker](doc/screenshots/datetime.png)
-
----
-
-## API Reference
-
-### `showDrumDatePicker`
+### showDrumDatePicker and showDrumDateTimePicker
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `context` | `BuildContext` | required | Build context |
 | `firstDate` | `DateTime` | required | Minimum selectable date |
 | `lastDate` | `DateTime` | required | Maximum selectable date |
-| `initialDate` | `DateTime?` | today | Pre-selected date |
+| `initialDate` | `DateTime?` | today | Pre selected date |
 | `currentDate` | `DateTime?` | `DateTime.now()` | The "today" marker |
 | `selectableDayPredicate` | `SelectableDayPredicate?` | null | Return false to disable a day |
-| `initialMode` | `DrumPickerMode` | `.drum` | Starting input mode |
-| `showModeToggle` | `bool` | `true` | Show mode tabs |
+| `initialMode` | `DrumPickerMode` | `.drum` | Starting date mode |
+| `showModeToggle` | `bool` | `true` | Show the mode tabs |
 | `columnOrder` | `DrumColumnOrder?` | locale default | Column order in drum mode |
-| `showDayOfWeekInDrum` | `bool` | `false` | Show weekday in drum day column |
-| `showQuickSelects` | `bool` | `true` | Show quick-select chips |
+| `showDayOfWeekInDrum` | `bool` | `false` | Show weekday in the drum day column |
+| `showQuickSelects` | `bool` | `true` | Show quick select chips |
 | `quickSelectOptions` | `List<DrumQuickSelect>?` | Today/Tomorrow/+7d | Custom chips |
 | `pickTime` | `bool` | `false` | Also pick a time of day |
-| `use24hFormat` | `bool?` | ambient | 24-hour time strip (no AM/PM) |
-| `minuteInterval` | `int` | `1` | Minute granularity (divisor of 60) |
+| `use24hFormat` | `bool?` | ambient | 24 hour time strip (no AM/PM) |
+| `minuteInterval` | `int` | `1` | Minute granularity (a divisor of 60) |
 | `helpText` | `String?` | `'SELECT DATE'` | Header label |
 | `confirmText` | `String?` | `'OK'` | Confirm button text |
 | `cancelText` | `String?` | `'Cancel'` | Cancel button text |
-| `errorFormatText` | `String?` | `'Invalid format…'` | Input mode format error |
+| `errorFormatText` | `String?` | `'Invalid format'` | Input mode format error |
 | `errorInvalidText` | `String?` | `'Out of range'` | Input mode range error |
 | `fieldHintText` | `String?` | `'MM/DD/YYYY'` | Input field hint |
 | `fieldLabelText` | `String?` | `'Enter Date'` | Input field label |
@@ -208,26 +216,46 @@ DrumPicker(
 | `barrierDismissible` | `bool` | `true` | Tap outside to dismiss |
 | `barrierColor` | `Color?` | `Colors.black54` | Barrier color |
 | `barrierLabel` | `String?` | localized | Barrier accessibility label |
-| `useRootNavigator` | `bool` | `true` | Use root navigator |
+| `useRootNavigator` | `bool` | `true` | Use the root navigator |
 | `routeSettings` | `RouteSettings?` | null | Route settings |
-| `restorationId` | `String?` | null | State restoration ID |
-| `anchorPoint` | `Offset?` | null | Split-screen anchor |
-| `builder` | `TransitionBuilder?` | null | Wrap dialog with `Theme`, etc. |
+| `restorationId` | `String?` | null | State restoration id |
+| `anchorPoint` | `Offset?` | null | Split screen anchor |
+| `builder` | `TransitionBuilder?` | null | Wrap the dialog with a Theme, and so on |
 
-### `DrumPicker` widget
+`showDrumDateTimePicker` takes the same parameters and is simply
+`showDrumDatePicker` with `pickTime` set to true.
 
-All parameters from `showDrumDatePicker` are available on the inline widget,
-plus:
+### showDrumTimePicker
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `showActions` | `bool` | `true` | Show Cancel/OK buttons |
-| `onChanged` | `ValueChanged<DateTime>?` | null | Called on every selection change |
-| `onConfirmed` | `ValueChanged<DateTime>?` | null | Called when OK is tapped |
-| `onCancelled` | `VoidCallback?` | null | Called when Cancel is tapped |
-| `onModeChanged` | `ValueChanged<DrumPickerMode>?` | null | Called on mode switch |
+| `context` | `BuildContext` | required | Build context |
+| `initialTime` | `TimeOfDay?` | now | Pre selected time |
+| `use24hFormat` | `bool?` | ambient | 24 hour mode (no AM/PM column) |
+| `minuteInterval` | `int` | `1` | Minute granularity (a divisor of 60) |
+| `helpText` | `String?` | `'SELECT TIME'` | Header label |
+| `confirmText` | `String?` | `'OK'` | Confirm button text |
+| `cancelText` | `String?` | `'Cancel'` | Cancel button text |
+| `locale` | `Locale?` | ambient | Locale override |
+| `textDirection` | `TextDirection?` | ambient | Text direction override |
+| `barrierDismissible` | `bool` | `true` | Tap outside to dismiss |
+| `barrierColor` | `Color?` | `Colors.black54` | Barrier color |
+| `barrierLabel` | `String?` | null | Barrier accessibility label |
+| `useRootNavigator` | `bool` | `true` | Use the root navigator |
+| `routeSettings` | `RouteSettings?` | null | Route settings |
+| `anchorPoint` | `Offset?` | null | Split screen anchor |
+| `builder` | `TransitionBuilder?` | null | Wrap the dialog with a Theme, and so on |
 
-### `DrumColumnOrder`
+### Inline widgets
+
+`DrumPicker` accepts every `showDrumDatePicker` parameter, plus the callbacks
+`onChanged`, `onConfirmed`, `onCancelled`, and `onModeChanged`, and the
+`showActions` flag. `DrumTimePicker` accepts every `showDrumTimePicker`
+parameter, plus `onChanged`, `onConfirmed`, `onCancelled`, and `showActions`.
+Set `showActions: false` to drop the built in Cancel and OK buttons and drive
+the value yourself with `onChanged`.
+
+### DrumColumnOrder
 
 | Value | Format | Typical regions |
 |---|---|---|
@@ -236,17 +264,17 @@ plus:
 | `ymd` | 2024 Jun 15 | Japan, China, Korea |
 | `ydm` | 2024 15 Jun | Rarely used |
 
-### `DrumPickerMode`
+### DrumPickerMode
 
 | Value | Best for |
 |---|---|
-| `drum` | Birth dates, expiry dates, distant past/future |
-| `calendar` | Scheduling events, appointments, near-future |
+| `drum` | Birth dates, expiry dates, distant past or future |
+| `calendar` | Scheduling events, appointments, near future |
 | `input` | Power users, accessibility tools, typed entry |
 
-### `DrumPickerTheme`
+### DrumPickerTheme
 
-Add to `ThemeData.extensions` to override individual tokens:
+Add it to `ThemeData.extensions` to override individual tokens:
 
 ```dart
 ThemeData(
@@ -262,11 +290,16 @@ ThemeData(
 )
 ```
 
----
+## Localization
 
-## Migration from `showDatePicker`
+The pickers follow the ambient locale for month and weekday names, the first
+day of the week, AM/PM labels, the column order, and right to left layout. Pass
+`locale` and `textDirection` to override them for a single picker. The time
+format follows `MediaQuery.alwaysUse24HourFormat` unless you set `use24hFormat`.
 
-Most parameters have identical names — usually only the function name changes:
+## Migration from showDatePicker
+
+Most parameters keep the same name, so usually only the function name changes:
 
 ```dart
 // Before
@@ -280,7 +313,7 @@ showDatePicker(
   locale: myLocale,
 );
 
-// After — identical parameter names
+// After, identical parameter names
 showDrumDatePicker(
   context: context,
   initialDate: myDate,
@@ -289,20 +322,17 @@ showDrumDatePicker(
   selectableDayPredicate: myPredicate,
   helpText: 'PICK DATE',
   locale: myLocale,
-  initialMode: DrumPickerMode.calendar, // optional: same feel as showDatePicker
+  initialMode: DrumPickerMode.calendar, // optional, same feel as showDatePicker
 );
 ```
 
----
-
 ## Roadmap
 
-- **v1.0** — Single date picker (drum + calendar + input modes).
-- **v1.1** — Combined date + time picking (`pickTime`, `showDrumDateTimePicker`).
-- **next** — `showDrumDateRangePicker` (date range selection).
-
----
+- **v1.0** Single date picker (drum, calendar, and input modes).
+- **v1.1** Combined date and time picking (`pickTime`, `showDrumDateTimePicker`).
+- **v1.2** Standalone time picker (`DrumTimePicker`, `showDrumTimePicker`).
+- **Next** Date range selection (`showDrumDateRangePicker`).
 
 ## License
 
-MIT © 2026 — see [LICENSE](LICENSE).
+MIT, 2026. See [LICENSE](LICENSE).

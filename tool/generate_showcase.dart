@@ -53,6 +53,15 @@ void main() {
       _DateTimeShowcase(),
     );
   });
+
+  testWidgets('generate time-only screenshot', (tester) async {
+    await _capture(
+      tester,
+      const Size(720, 560),
+      'doc/screenshots/time.png',
+      const _TimeShowcase(),
+    );
+  });
 }
 
 Future<void> _loadFonts(WidgetTester tester) async {
@@ -327,6 +336,76 @@ class _DateTimeShowcase extends StatelessWidget {
               minuteInterval: use24h ? 5 : 1,
               columnOrder: DrumColumnOrder.dmy,
               helpText: 'SELECT DATE & TIME',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A focused two-panel close-up of the time-only picker (12- and 24-hour).
+class _TimeShowcase extends StatelessWidget {
+  const _TimeShowcase();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: const Color(0xFFF1F1F8),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Time only',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'A standalone time picker, configurable for AM/PM or 24-hour',
+                style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _panel('12-hour (AM/PM)', use24h: false),
+                  const SizedBox(width: 16),
+                  _panel('24-hour, 5-min steps', use24h: true),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _panel(String label, {required bool use24h}) {
+    return SizedBox(
+      width: 300,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              style:
+                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          const SizedBox(height: 8),
+          Card(
+            clipBehavior: Clip.antiAlias,
+            elevation: 3,
+            child: DrumTimePicker(
+              initialTime: const TimeOfDay(hour: 14, minute: 30),
+              use24hFormat: use24h,
+              minuteInterval: use24h ? 5 : 1,
+              showActions: false,
             ),
           ),
         ],

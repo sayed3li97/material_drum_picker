@@ -11,6 +11,7 @@ import 'screens/localization_screen.dart';
 import 'screens/rtl_screen.dart';
 import 'screens/scheduling_screen.dart';
 import 'screens/showcase_screen.dart';
+import 'screens/time_screen.dart';
 
 void main() => runApp(const ExampleApp());
 
@@ -50,6 +51,7 @@ class HomeScreen extends StatelessWidget {
   static const _demos = <(String, String, WidgetBuilder)>[
     ('Showcase', 'All options live, side by side', _showcase),
     ('Date + time', 'Combined date & time picker', _dateTime),
+    ('Time only', '12-hour and 24-hour time picker', _time),
     ('Basic', 'Drop-in replacement for showDatePicker', _basic),
     ('Birth date', 'Drum mode, locked, min/max age', _birth),
     ('Booking', 'Disabled weekends and holidays', _booking),
@@ -62,6 +64,7 @@ class HomeScreen extends StatelessWidget {
 
   static Widget _showcase(BuildContext c) => const ShowcaseScreen();
   static Widget _dateTime(BuildContext c) => const DateTimeScreen();
+  static Widget _time(BuildContext c) => const TimeScreen();
   static Widget _basic(BuildContext c) => const BasicScreen();
   static Widget _birth(BuildContext c) => const BirthDateScreen();
   static Widget _booking(BuildContext c) => const BookingScreen();

@@ -21,4 +21,6 @@ export 'src/widgets/drum_date_time_picker_dialog.dart'
 export 'src/widgets/drum_picker.dart'
     show DrumPicker, DrumSelectableDayPredicate;
 export 'src/widgets/drum_picker_dialog.dart' show showDrumDatePicker;
+export 'src/widgets/drum_time_picker.dart'
+    show DrumTimePicker, showDrumTimePicker;
 export 'src/widgets/drum_picker_range_dialog.dart' show showDrumDateRangePicker;

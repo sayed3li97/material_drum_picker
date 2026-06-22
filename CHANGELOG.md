@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0
+
+- **Time-only picking.** New `DrumTimePicker` widget and `showDrumTimePicker`
+  function that return a `TimeOfDay`. Configurable for AM/PM (12 hour) or
+  24 hour mode via `use24hFormat` (which falls back to
+  `MediaQuery.alwaysUse24HourFormat`), with `minuteInterval` granularity.
+- Example app gains a "Time only" screen (12 hour dialog, 24 hour dialog with
+  5 minute steps, and an inline 15 minute picker).
+- README rewritten and expanded: a pickers overview table plus dedicated
+  date+time and time-only screenshots.
+
 ## 1.1.0
 
 - **Date + time picking.** `DrumPicker` gains `pickTime`, `use24hFormat`, and
