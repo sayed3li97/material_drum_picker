@@ -1,6 +1,9 @@
 # material_drum_picker
 
 [![pub package](https://img.shields.io/pub/v/material_drum_picker.svg)](https://pub.dev/packages/material_drum_picker)
+[![pub points](https://img.shields.io/pub/points/material_drum_picker)](https://pub.dev/packages/material_drum_picker/score)
+[![likes](https://img.shields.io/pub/likes/material_drum_picker)](https://pub.dev/packages/material_drum_picker/score)
+[![CI](https://github.com/sayed3li97/material_drum_picker/actions/workflows/ci.yml/badge.svg)](https://github.com/sayed3li97/material_drum_picker/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A Material Design 3 date, time, and date+time picker with an iOS style drum
@@ -325,6 +328,13 @@ showDrumDatePicker(
   initialMode: DrumPickerMode.calendar, // optional, same feel as showDatePicker
 );
 ```
+
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for
+the development setup and the checks that run in CI, and note the
+[Code of Conduct](CODE_OF_CONDUCT.md). To report a security issue, see
+[SECURITY.md](SECURITY.md).
 
 ## Roadmap
 
