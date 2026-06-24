@@ -12,10 +12,15 @@ class DayCell extends StatelessWidget {
     required this.isSelected,
     required this.isToday,
     required this.onTap,
+    this.label,
   });
 
   /// The day-of-month number shown in the cell.
   final int day;
+
+  /// The text to display, defaulting to [day]. Pass a localized numeral string
+  /// so non Latin locales render their own digits.
+  final String? label;
 
   /// Whether the cell may be tapped. Disabled cells are greyed out.
   final bool isEnabled;
@@ -67,7 +72,7 @@ class DayCell extends StatelessWidget {
               onTap: isEnabled ? onTap : null,
               child: Center(
                 child: Text(
-                  '$day',
+                  label ?? '$day',
                   style: TextStyle(
                     color: foreground,
                     fontWeight: isSelected || isToday ? FontWeight.w600 : null,

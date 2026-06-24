@@ -5,7 +5,9 @@ import 'screens/basic_screen.dart';
 import 'screens/birth_date_screen.dart';
 import 'screens/booking_screen.dart';
 import 'screens/custom_theme_screen.dart';
+import 'screens/data_backed_calendar_screen.dart';
 import 'screens/date_time_screen.dart';
+import 'screens/hijri_screen.dart';
 import 'screens/inline_form_screen.dart';
 import 'screens/localization_screen.dart';
 import 'screens/rtl_screen.dart';
@@ -52,6 +54,8 @@ class HomeScreen extends StatelessWidget {
     ('Showcase', 'All options live, side by side', _showcase),
     ('Date + time', 'Combined date & time picker', _dateTime),
     ('Time only', '12-hour and 24-hour time picker', _time),
+    ('Hijri', 'Umm al-Qura calendar in Arabic', _hijri),
+    ('Data backed', 'Committee calendar from a dataset', _dataBacked),
     ('Basic', 'Drop-in replacement for showDatePicker', _basic),
     ('Birth date', 'Drum mode, locked, min/max age', _birth),
     ('Booking', 'Disabled weekends and holidays', _booking),
@@ -65,6 +69,8 @@ class HomeScreen extends StatelessWidget {
   static Widget _showcase(BuildContext c) => const ShowcaseScreen();
   static Widget _dateTime(BuildContext c) => const DateTimeScreen();
   static Widget _time(BuildContext c) => const TimeScreen();
+  static Widget _hijri(BuildContext c) => const HijriScreen();
+  static Widget _dataBacked(BuildContext c) => const DataBackedCalendarScreen();
   static Widget _basic(BuildContext c) => const BasicScreen();
   static Widget _birth(BuildContext c) => const BirthDateScreen();
   static Widget _booking(BuildContext c) => const BookingScreen();

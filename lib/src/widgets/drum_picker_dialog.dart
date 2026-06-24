@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../calendar/drum_calendar_system.dart';
+import '../models/drum_calendar_type.dart';
 import '../models/drum_column_order.dart';
 import '../models/drum_picker_mode.dart';
 import '../models/drum_quick_select.dart';
@@ -34,6 +36,9 @@ Future<DateTime?> showDrumDatePicker({
   bool showDayOfWeekInDrum = false,
   bool showQuickSelects = true,
   List<DrumQuickSelect>? quickSelectOptions,
+  DrumCalendarType calendar = DrumCalendarType.gregorian,
+  DrumCalendarSystem? calendarSystem,
+  bool showGregorianAlongside = false,
   bool pickTime = false,
   bool? use24hFormat,
   int minuteInterval = 1,
@@ -70,6 +75,9 @@ Future<DateTime?> showDrumDatePicker({
     showDayOfWeekInDrum: showDayOfWeekInDrum,
     showQuickSelects: showQuickSelects,
     quickSelectOptions: quickSelectOptions,
+    calendar: calendar,
+    calendarSystem: calendarSystem,
+    showGregorianAlongside: showGregorianAlongside,
     pickTime: pickTime,
     use24hFormat: use24hFormat,
     minuteInterval: minuteInterval,
@@ -126,6 +134,9 @@ class _DrumPickerDialog extends StatelessWidget {
     required this.showDayOfWeekInDrum,
     required this.showQuickSelects,
     this.quickSelectOptions,
+    required this.calendar,
+    this.calendarSystem,
+    required this.showGregorianAlongside,
     required this.pickTime,
     this.use24hFormat,
     required this.minuteInterval,
@@ -151,6 +162,9 @@ class _DrumPickerDialog extends StatelessWidget {
   final bool showDayOfWeekInDrum;
   final bool showQuickSelects;
   final List<DrumQuickSelect>? quickSelectOptions;
+  final DrumCalendarType calendar;
+  final DrumCalendarSystem? calendarSystem;
+  final bool showGregorianAlongside;
   final bool pickTime;
   final bool? use24hFormat;
   final int minuteInterval;
@@ -184,6 +198,9 @@ class _DrumPickerDialog extends StatelessWidget {
             showDayOfWeekInDrum: showDayOfWeekInDrum,
             showQuickSelects: showQuickSelects,
             quickSelectOptions: quickSelectOptions,
+            calendar: calendar,
+            calendarSystem: calendarSystem,
+            showGregorianAlongside: showGregorianAlongside,
             pickTime: pickTime,
             use24hFormat: use24hFormat,
             minuteInterval: minuteInterval,

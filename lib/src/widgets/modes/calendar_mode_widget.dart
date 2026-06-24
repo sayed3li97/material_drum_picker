@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 
+import '../../calendar/drum_calendar_system.dart';
 import '../../utils/drum_date_utils.dart';
+import '../../utils/drum_locale_utils.dart';
+import '../../utils/drum_numerals.dart';
 import '../internal/day_cell.dart';
 
-/// The calendar grid input mode.
+/// The calendar grid input mode, rendered in the active [system] calendar.
 class CalendarModeWidget extends StatefulWidget {
   /// Creates the calendar mode body.
   const CalendarModeWidget({
@@ -14,12 +16,13 @@ class CalendarModeWidget extends StatefulWidget {
     required this.firstDate,
     required this.lastDate,
     required this.currentDate,
+    required this.system,
+    required this.locale,
     required this.onChanged,
     this.selectableDayPredicate,
-    this.localeName,
   });
 
-  /// The currently-selected date.
+  /// The currently-selected date (canonical Gregorian value).
   final DateTime selectedDate;
 
   /// The earliest selectable date.
@@ -31,39 +34,48 @@ class CalendarModeWidget extends StatefulWidget {
   /// The date highlighted as "today".
   final DateTime currentDate;
 
+  /// The active calendar system.
+  final DrumCalendarSystem system;
+
+  /// The resolved locale for names and numerals.
+  final Locale locale;
+
   /// Called with the new date when a day is tapped.
   final ValueChanged<DateTime> onChanged;
 
   /// Optional predicate restricting selectable days.
   final bool Function(DateTime day)? selectableDayPredicate;
 
-  /// The `intl` locale used to format the month/year header.
-  final String? localeName;
-
   @override
   State<CalendarModeWidget> createState() => _CalendarModeWidgetState();
 }
 
 class _CalendarModeWidgetState extends State<CalendarModeWidget> {
-  late DateTime _displayedMonth;
+  late int _year;
+  late int _month;
   bool _showYearGrid = false;
   final FocusNode _focusNode = FocusNode();
+
+  String? get _localeName => DrumLocaleUtils.toIntlLocale(widget.locale);
 
   @override
   void initState() {
     super.initState();
-    _displayedMonth =
-        DateTime(widget.selectedDate.year, widget.selectedDate.month);
+    _syncDisplayed(widget.selectedDate);
   }
 
   @override
   void didUpdateWidget(CalendarModeWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!DrumDateUtils.isSameMonth(
-        widget.selectedDate, oldWidget.selectedDate)) {
-      _displayedMonth =
-          DateTime(widget.selectedDate.year, widget.selectedDate.month);
+    if (!DrumDateUtils.isSameDay(widget.selectedDate, oldWidget.selectedDate)) {
+      _syncDisplayed(widget.selectedDate);
     }
+  }
+
+  void _syncDisplayed(DateTime date) {
+    final c = widget.system.decode(date);
+    _year = c.year;
+    _month = c.month;
   }
 
   @override
@@ -77,15 +89,26 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
         (widget.selectableDayPredicate?.call(date) ?? true);
   }
 
-  bool get _canGoPrev => _displayedMonth
-      .isAfter(DateTime(widget.firstDate.year, widget.firstDate.month));
+  int get _firstLinear {
+    final c = widget.system.decode(widget.firstDate);
+    return c.year * 12 + (c.month - 1);
+  }
 
-  bool get _canGoNext => _displayedMonth
-      .isBefore(DateTime(widget.lastDate.year, widget.lastDate.month));
+  int get _lastLinear {
+    final c = widget.system.decode(widget.lastDate);
+    return c.year * 12 + (c.month - 1);
+  }
+
+  int get _displayedLinear => _year * 12 + (_month - 1);
+
+  bool get _canGoPrev => _displayedLinear > _firstLinear;
+  bool get _canGoNext => _displayedLinear < _lastLinear;
 
   void _changeMonth(int delta) {
+    final target = (_displayedLinear + delta).clamp(_firstLinear, _lastLinear);
     setState(() {
-      _displayedMonth = DrumDateUtils.addMonths(_displayedMonth, delta);
+      _year = target ~/ 12;
+      _month = target % 12 + 1;
     });
   }
 
@@ -99,10 +122,7 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
     if (!DrumDateUtils.isInRange(target, widget.firstDate, widget.lastDate)) {
       return;
     }
-    setState(() {
-      _displayedMonth = DateTime(target.year, target.month);
-    });
-    // Only commit the selection if the target day is itself selectable.
+    setState(() => _syncDisplayed(target));
     if (_isSelectable(target)) {
       widget.onChanged(DrumDateUtils.dateOnly(target));
     }
@@ -159,7 +179,9 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    final label = DateFormat.yMMMM(widget.localeName).format(_displayedMonth);
+    final monthName = widget.system
+        .monthName(_month, abbreviated: false, locale: widget.locale);
+    final label = '$monthName ${DrumNumerals.format(_year, _localeName)}';
     return Row(
       children: [
         TextButton.icon(
@@ -207,12 +229,10 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
   Widget _buildDayGrid(BuildContext context) {
     final localizations = MaterialLocalizations.of(context);
     final firstDayOfWeek = localizations.firstDayOfWeekIndex;
-    final year = _displayedMonth.year;
-    final month = _displayedMonth.month;
-    final daysInMonth = DrumDateUtils.daysInMonth(year, month);
+    final daysInMonth = widget.system.daysInMonth(_year, _month);
 
     // weekday: Mon=1..Sun=7; convert to 0-based from firstDayOfWeek.
-    final firstWeekday = DateTime(year, month).weekday % 7; // Sun=0..Sat=6
+    final firstWeekday = widget.system.encode(_year, _month, 1).weekday % 7;
     final leading = (firstWeekday - firstDayOfWeek + 7) % 7;
 
     final cells = <Widget>[];
@@ -220,9 +240,10 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
       cells.add(const SizedBox(width: 44, height: 44));
     }
     for (var day = 1; day <= daysInMonth; day++) {
-      final date = DateTime(year, month, day);
+      final date = widget.system.encode(_year, _month, day);
       cells.add(DayCell(
         day: day,
+        label: DrumNumerals.format(day, _localeName),
         isEnabled: _isSelectable(date),
         isSelected: DrumDateUtils.isSameDay(date, widget.selectedDate),
         isToday: DrumDateUtils.isSameDay(date, widget.currentDate),
@@ -240,8 +261,8 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
   }
 
   Widget _buildYearGrid(BuildContext context) {
-    final firstYear = widget.firstDate.year;
-    final lastYear = widget.lastDate.year;
+    final firstYear = widget.system.decode(widget.firstDate).year;
+    final lastYear = widget.system.decode(widget.lastDate).year;
     return SizedBox(
       height: 240,
       child: GridView.count(
@@ -257,7 +278,7 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
 
   Widget _buildYearTile(BuildContext context, int year) {
     final scheme = Theme.of(context).colorScheme;
-    final isSelected = year == _displayedMonth.year;
+    final isSelected = year == _year;
     return Padding(
       padding: const EdgeInsets.all(4),
       child: Material(
@@ -267,13 +288,13 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
           borderRadius: BorderRadius.circular(20),
           onTap: () {
             setState(() {
-              _displayedMonth = DateTime(year, _displayedMonth.month);
+              _year = year;
               _showYearGrid = false;
             });
           },
           child: Center(
             child: Text(
-              '$year',
+              DrumNumerals.format(year, _localeName),
               style: TextStyle(
                 color: isSelected ? scheme.onPrimary : scheme.onSurface,
                 fontWeight: isSelected ? FontWeight.w600 : null,

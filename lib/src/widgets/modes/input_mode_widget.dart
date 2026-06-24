@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import '../../calendar/drum_calendar_system.dart';
 import '../../utils/drum_date_utils.dart';
+import '../../utils/drum_locale_utils.dart';
+import '../../utils/drum_numerals.dart';
 
-/// The keyboard text-entry input mode, with live `MM/DD/YYYY` validation.
+/// The keyboard text-entry input mode, with live `MM/DD/YYYY` validation in the
+/// active [system] calendar. The positional Month/Day/Year format is kept for
+/// backward compatibility; only validation, conversion, and the localized
+/// preview follow the active calendar.
 class InputModeWidget extends StatefulWidget {
   /// Creates the input mode body.
   const InputModeWidget({
@@ -12,16 +18,17 @@ class InputModeWidget extends StatefulWidget {
     required this.selectedDate,
     required this.firstDate,
     required this.lastDate,
+    required this.system,
+    required this.locale,
     required this.onChanged,
     this.selectableDayPredicate,
     this.errorFormatText,
     this.errorInvalidText,
     this.fieldHintText,
     this.fieldLabelText,
-    this.localeName,
   });
 
-  /// The currently-selected date.
+  /// The currently-selected date (canonical Gregorian value).
   final DateTime selectedDate;
 
   /// The earliest selectable date.
@@ -29,6 +36,12 @@ class InputModeWidget extends StatefulWidget {
 
   /// The latest selectable date.
   final DateTime lastDate;
+
+  /// The active calendar system.
+  final DrumCalendarSystem system;
+
+  /// The resolved locale for names and numerals.
+  final Locale locale;
 
   /// Called with the new date when valid text is entered.
   final ValueChanged<DateTime> onChanged;
@@ -39,7 +52,7 @@ class InputModeWidget extends StatefulWidget {
   /// Error shown when the typed text is not a valid `MM/DD/YYYY` date.
   final String? errorFormatText;
 
-  /// Error shown when the date is valid but out of range / not selectable.
+  /// Error shown when the date is valid but out of range or not selectable.
   final String? errorInvalidText;
 
   /// Hint text for the field. Defaults to `MM/DD/YYYY`.
@@ -47,9 +60,6 @@ class InputModeWidget extends StatefulWidget {
 
   /// Label text for the field. Defaults to `Enter Date`.
   final String? fieldLabelText;
-
-  /// The `intl` locale used to format the helper preview text.
-  final String? localeName;
 
   @override
   State<InputModeWidget> createState() => _InputModeWidgetState();
@@ -59,6 +69,8 @@ class _InputModeWidgetState extends State<InputModeWidget> {
   late final TextEditingController _controller;
   String? _errorText;
   String? _helperText;
+
+  String? get _localeName => DrumLocaleUtils.toIntlLocale(widget.locale);
 
   @override
   void initState() {
@@ -72,25 +84,43 @@ class _InputModeWidgetState extends State<InputModeWidget> {
     super.dispose();
   }
 
+  /// Formats [date] as Month/Day/Year in the active calendar, with locale
+  /// aware digits.
   String _format(DateTime date) {
-    final mm = date.month.toString().padLeft(2, '0');
-    final dd = date.day.toString().padLeft(2, '0');
-    final yyyy = date.year.toString().padLeft(4, '0');
+    final c = widget.system.decode(date);
+    final mm = DrumNumerals.formatPadded(c.month, 2, _localeName);
+    final dd = DrumNumerals.formatPadded(c.day, 2, _localeName);
+    final yyyy = DrumNumerals.formatPadded(c.year, 4, _localeName);
     return '$mm/$dd/$yyyy';
   }
 
-  /// Parses `MM/DD/YYYY`, returning `null` if the text is malformed.
+  /// Maps Eastern Arabic-Indic and Persian digits to ASCII so typed localized
+  /// digits parse correctly.
+  String _normalizeDigits(String input) {
+    final buffer = StringBuffer();
+    for (final rune in input.runes) {
+      if (rune >= 0x0660 && rune <= 0x0669) {
+        buffer.writeCharCode(0x30 + (rune - 0x0660));
+      } else if (rune >= 0x06F0 && rune <= 0x06F9) {
+        buffer.writeCharCode(0x30 + (rune - 0x06F0));
+      } else {
+        buffer.writeCharCode(rune);
+      }
+    }
+    return buffer.toString();
+  }
+
+  /// Parses `MM/DD/YYYY` in the active calendar, returning the canonical
+  /// `DateTime`, or null if the text is malformed or invalid in the calendar.
   DateTime? _parse(String text) {
-    final parts = text.split('/');
+    final parts = _normalizeDigits(text).split('/');
     if (parts.length != 3) return null;
     final month = int.tryParse(parts[0]);
     final day = int.tryParse(parts[1]);
     final year = int.tryParse(parts[2]);
     if (month == null || day == null || year == null) return null;
-    if (month < 1 || month > 12) return null;
-    if (year < 1 || day < 1) return null;
-    if (day > DrumDateUtils.daysInMonth(year, month)) return null;
-    return DateTime(year, month, day);
+    if (!widget.system.isValid(year, month, day)) return null;
+    return widget.system.encode(year, month, day);
   }
 
   void _onChanged(String text) {
@@ -118,9 +148,19 @@ class _InputModeWidgetState extends State<InputModeWidget> {
     }
     setState(() {
       _errorText = null;
-      _helperText = DateFormat.yMMMMEEEEd(widget.localeName).format(date);
+      _helperText = _preview(date);
     });
     widget.onChanged(date);
+  }
+
+  String _preview(DateTime date) {
+    final c = widget.system.decode(date);
+    final weekday = DateFormat.EEEE(_localeName).format(date);
+    final month = widget.system
+        .monthName(c.month, abbreviated: false, locale: widget.locale);
+    final day = DrumNumerals.format(c.day, _localeName);
+    final year = DrumNumerals.format(c.year, _localeName);
+    return '$weekday, $month $day, $year';
   }
 
   @override
@@ -132,7 +172,7 @@ class _InputModeWidgetState extends State<InputModeWidget> {
         keyboardType: TextInputType.number,
         autofocus: false,
         inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'[0-9/]')),
+          FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩۰-۹/]')),
           LengthLimitingTextInputFormatter(10),
         ],
         decoration: InputDecoration(
