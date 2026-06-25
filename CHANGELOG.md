@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.3.0
+
+- **Hijri (Umm al-Qura) calendar.** Pass `calendar: DrumCalendarType.hijri` to
+  show the drum, calendar, and input modes in the lunar Hijri calendar, fully
+  composed with the existing right to left support. The returned value is still
+  a Gregorian `DateTime`. The Umm al-Qura table is vendored as pure Dart, so the
+  package keeps its only runtime dependencies as Flutter and `intl`.
+- **Pluggable data backed calendars.** New `TabularLunarCalendarSystem` lets you
+  drive the picker from a published dataset of Hijri month start dates (for an
+  official or committee lunar calendar). Pass an instance through the new
+  `calendarSystem` parameter, which takes precedence over `calendar`. The
+  package ships only the mechanism and a documented schema, never any specific
+  publisher's data. Malformed datasets are rejected rather than producing wrong
+  dates.
+- New public types: `DrumCalendarType`, `DrumCalendarSystem`,
+  `GregorianCalendarSystem`, `HijriCalendarSystem`,
+  `TabularLunarCalendarSystem`, `TabularLunarMonth`, and `CalendarDate`.
+- New `showGregorianAlongside` flag (off by default) renders the Gregorian
+  equivalent as a small secondary line in the header.
+- Day, month, and year numbers now route through one locale aware numeral path,
+  so a locale that uses Arabic-Indic digits renders them consistently across the
+  drum, calendar, input, and header.
+- No breaking changes. Every new parameter defaults to the previous Gregorian
+  behavior, and all existing tests and goldens pass unchanged.
+
 ## 1.2.0
 
 - **Time-only picking.** New `DrumTimePicker` widget and `showDrumTimePicker`

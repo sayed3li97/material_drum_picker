@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../calendar/drum_calendar_system.dart';
+import '../models/drum_calendar_type.dart';
 import '../models/drum_column_order.dart';
 import '../models/drum_picker_mode.dart';
 import '../models/drum_quick_select.dart';
@@ -32,6 +34,9 @@ Future<DateTime?> showDrumDateTimePicker({
   bool showDayOfWeekInDrum = false,
   bool showQuickSelects = true,
   List<DrumQuickSelect>? quickSelectOptions,
+  DrumCalendarType calendar = DrumCalendarType.gregorian,
+  DrumCalendarSystem? calendarSystem,
+  bool showGregorianAlongside = false,
   bool? use24hFormat,
   int minuteInterval = 1,
   String? helpText,
@@ -65,6 +70,9 @@ Future<DateTime?> showDrumDateTimePicker({
     showDayOfWeekInDrum: showDayOfWeekInDrum,
     showQuickSelects: showQuickSelects,
     quickSelectOptions: quickSelectOptions,
+    calendar: calendar,
+    calendarSystem: calendarSystem,
+    showGregorianAlongside: showGregorianAlongside,
     pickTime: true,
     use24hFormat: use24hFormat,
     minuteInterval: minuteInterval,

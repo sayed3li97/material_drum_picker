@@ -3,12 +3,17 @@ import 'package:flutter/semantics.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart' show DateFormat;
 
+import '../calendar/drum_calendar_system.dart';
+import '../calendar/gregorian_calendar_system.dart';
+import '../calendar/hijri/hijri_calendar_system.dart';
+import '../models/drum_calendar_type.dart';
 import '../models/drum_column_order.dart';
 import '../models/drum_picker_mode.dart';
 import '../models/drum_quick_select.dart';
 import '../theme/drum_picker_theme.dart';
 import '../utils/drum_date_utils.dart';
 import '../utils/drum_locale_utils.dart';
+import '../utils/drum_numerals.dart';
 import 'internal/mode_tab_bar.dart';
 import 'internal/picker_header.dart';
 import 'internal/quick_chips.dart';
@@ -44,6 +49,9 @@ class DrumPicker extends StatefulWidget {
     this.showDayOfWeekInDrum = false,
     this.showQuickSelects = true,
     this.quickSelectOptions,
+    this.calendar = DrumCalendarType.gregorian,
+    this.calendarSystem,
+    this.showGregorianAlongside = false,
     this.pickTime = false,
     this.use24hFormat,
     this.minuteInterval = 1,
@@ -105,6 +113,22 @@ class DrumPicker extends StatefulWidget {
 
   /// Custom quick-select options. Replaces the defaults if provided.
   final List<DrumQuickSelect>? quickSelectOptions;
+
+  /// The built in calendar system to present dates in. Defaults to
+  /// [DrumCalendarType.gregorian]. Ignored when [calendarSystem] is non null.
+  ///
+  /// The returned value is always a Gregorian `DateTime`.
+  final DrumCalendarType calendar;
+
+  /// A custom calendar system. When non null it takes precedence over
+  /// [calendar], letting you inject any system, including a
+  /// `TabularLunarCalendarSystem` built from a committee dataset.
+  final DrumCalendarSystem? calendarSystem;
+
+  /// Whether to show the Gregorian equivalent as a small secondary line under
+  /// the headline. Off by default. Only meaningful for a non Gregorian
+  /// calendar.
+  final bool showGregorianAlongside;
 
   /// Whether to also let the user pick a time of day.
   ///
@@ -175,6 +199,9 @@ class DrumPicker extends StatefulWidget {
 class _DrumPickerState extends State<DrumPicker> {
   late DateTime _selectedDate;
   late DrumPickerMode _mode;
+  late final DrumCalendarSystem _system;
+  late final DateTime _first;
+  late final DateTime _last;
 
   DateTime get _currentDate =>
       DrumDateUtils.dateOnly(widget.currentDate ?? DateTime.now());
@@ -186,9 +213,25 @@ class _DrumPickerState extends State<DrumPicker> {
     // available immediately for DateFormat (prevents crashes for non-en apps).
     initializeDateFormatting();
     _mode = widget.initialMode;
+
+    // Resolve the active calendar system. An explicit system wins over the
+    // enum.
+    _system = widget.calendarSystem ??
+        (widget.calendar == DrumCalendarType.hijri
+            ? const HijriCalendarSystem()
+            : const GregorianCalendarSystem());
+
+    // Intersect the caller's range with the system's supported range so that
+    // conversions never run past the calendar's bounds.
+    final lo = DrumDateUtils.dateOnly(widget.firstDate);
+    final hi = DrumDateUtils.dateOnly(widget.lastDate);
+    final sysLo = DrumDateUtils.dateOnly(_system.minSupported);
+    final sysHi = DrumDateUtils.dateOnly(_system.maxSupported);
+    _first = lo.isBefore(sysLo) ? sysLo : lo;
+    _last = hi.isAfter(sysHi) ? sysHi : hi;
+
     final initial = widget.initialDate ?? widget.currentDate ?? DateTime.now();
-    final clampedDate =
-        DrumDateUtils.clamp(initial, widget.firstDate, widget.lastDate);
+    final clampedDate = DrumDateUtils.clamp(initial, _first, _last);
     if (widget.pickTime) {
       _selectedDate = DrumDateUtils.combine(
         clampedDate,
@@ -253,22 +296,37 @@ class _DrumPickerState extends State<DrumPicker> {
   }
 
   bool _isQuickSelectEnabled(DrumQuickSelect chip) {
-    return DrumDateUtils.isInRange(
-          chip.date,
-          widget.firstDate,
-          widget.lastDate,
-        ) &&
+    return DrumDateUtils.isInRange(chip.date, _first, _last) &&
         (widget.selectableDayPredicate?.call(chip.date) ?? true);
+  }
+
+  /// The calendar and locale aware headline for the selected date.
+  String _headline(Locale locale, String? localeName) {
+    if (_system is GregorianCalendarSystem) {
+      // Keep the exact Gregorian formatting so existing output is unchanged.
+      return DateFormat.MMMEd(localeName).format(_selectedDate);
+    }
+    final c = _system.decode(_selectedDate);
+    final weekday = DateFormat.E(localeName).format(_selectedDate);
+    final month = _system.monthName(c.month, abbreviated: true, locale: locale);
+    final day = DrumNumerals.format(c.day, localeName);
+    return '$weekday, $month $day';
   }
 
   @override
   Widget build(BuildContext context) {
     final tokens = DrumPickerTheme.resolve(context);
-    final localeName = DrumLocaleUtils.toIntlLocale(_effectiveLocale(context));
+    final locale = _effectiveLocale(context) ?? const Locale('en');
+    final localeName = DrumLocaleUtils.toIntlLocale(locale);
     final materialLocalizations = MaterialLocalizations.of(context);
     final use24h = widget.use24hFormat ??
         MediaQuery.maybeOf(context)?.alwaysUse24HourFormat ??
         false;
+
+    final secondary =
+        widget.showGregorianAlongside && _system is! GregorianCalendarSystem
+            ? DateFormat.yMMMMd(localeName).format(_selectedDate)
+            : null;
 
     Widget content = Column(
       mainAxisSize: MainAxisSize.min,
@@ -276,17 +334,17 @@ class _DrumPickerState extends State<DrumPicker> {
         PickerHeader(
           helpText: widget.helpText ??
               (widget.pickTime ? 'SELECT DATE & TIME' : 'SELECT DATE'),
-          selectedDate: _selectedDate,
+          headline: _headline(locale, localeName),
           tokens: tokens,
-          localeName: localeName,
           timeText: widget.pickTime
               ? (use24h ? DateFormat.Hm(localeName) : DateFormat.jm(localeName))
                   .format(_selectedDate)
               : null,
+          secondaryText: secondary,
         ),
         if (widget.showModeToggle)
           ModeTabBar(mode: _mode, onModeChanged: _onModeChanged),
-        _buildBody(tokens, localeName),
+        _buildBody(tokens, locale),
         if (widget.pickTime)
           TimeStrip(
             time: TimeOfDay.fromDateTime(_selectedDate),
@@ -313,41 +371,44 @@ class _DrumPickerState extends State<DrumPicker> {
     return content;
   }
 
-  Widget _buildBody(DrumPickerResolved tokens, String? localeName) {
+  Widget _buildBody(DrumPickerResolved tokens, Locale locale) {
     switch (_mode) {
       case DrumPickerMode.drum:
         return DrumModeWidget(
           selectedDate: _selectedDate,
-          firstDate: widget.firstDate,
-          lastDate: widget.lastDate,
+          firstDate: _first,
+          lastDate: _last,
           columnOrder: _resolveColumnOrder(context),
           showDayOfWeek: widget.showDayOfWeekInDrum,
           tokens: tokens,
+          system: _system,
+          locale: locale,
           selectableDayPredicate: widget.selectableDayPredicate,
-          localeName: localeName,
           onChanged: _onDateChanged,
         );
       case DrumPickerMode.calendar:
         return CalendarModeWidget(
           selectedDate: _selectedDate,
-          firstDate: widget.firstDate,
-          lastDate: widget.lastDate,
+          firstDate: _first,
+          lastDate: _last,
           currentDate: _currentDate,
+          system: _system,
+          locale: locale,
           selectableDayPredicate: widget.selectableDayPredicate,
-          localeName: localeName,
           onChanged: _onDateChanged,
         );
       case DrumPickerMode.input:
         return InputModeWidget(
           selectedDate: _selectedDate,
-          firstDate: widget.firstDate,
-          lastDate: widget.lastDate,
+          firstDate: _first,
+          lastDate: _last,
+          system: _system,
+          locale: locale,
           selectableDayPredicate: widget.selectableDayPredicate,
           errorFormatText: widget.errorFormatText,
           errorInvalidText: widget.errorInvalidText,
           fieldHintText: widget.fieldHintText,
           fieldLabelText: widget.fieldLabelText,
-          localeName: localeName,
           onChanged: _onDateChanged,
         );
     }

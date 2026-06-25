@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../calendar/drum_calendar_system.dart';
 import '../../models/drum_column_order.dart';
 import '../../theme/drum_picker_theme.dart';
 import '../../utils/drum_date_utils.dart';
+import '../../utils/drum_locale_utils.dart';
+import '../../utils/drum_numerals.dart';
 import '../internal/drum_column.dart';
 
-/// The drum-wheel input mode: scrollable day/month/year columns.
+/// The drum-wheel input mode: scrollable day/month/year columns, rendered in
+/// the active [system] calendar.
 class DrumModeWidget extends StatefulWidget {
   /// Creates the drum mode body.
   const DrumModeWidget({
@@ -17,12 +21,13 @@ class DrumModeWidget extends StatefulWidget {
     required this.columnOrder,
     required this.showDayOfWeek,
     required this.tokens,
+    required this.system,
+    required this.locale,
     required this.onChanged,
     this.selectableDayPredicate,
-    this.localeName,
   });
 
-  /// The currently-selected date.
+  /// The currently-selected date (canonical Gregorian value).
   final DateTime selectedDate;
 
   /// The earliest selectable date.
@@ -40,14 +45,17 @@ class DrumModeWidget extends StatefulWidget {
   /// Resolved visual tokens.
   final DrumPickerResolved tokens;
 
+  /// The active calendar system.
+  final DrumCalendarSystem system;
+
+  /// The resolved locale for names and numerals.
+  final Locale locale;
+
   /// Called with the new date whenever a column settles.
   final ValueChanged<DateTime> onChanged;
 
   /// Optional predicate restricting selectable days.
   final bool Function(DateTime day)? selectableDayPredicate;
-
-  /// The `intl` locale used to format month and weekday names.
-  final String? localeName;
 
   @override
   State<DrumModeWidget> createState() => _DrumModeWidgetState();
@@ -58,8 +66,10 @@ class _DrumModeWidgetState extends State<DrumModeWidget> {
   late int _month;
   late int _day;
 
-  int get _firstYear => widget.firstDate.year;
-  int get _lastYear => widget.lastDate.year;
+  String? get _localeName => DrumLocaleUtils.toIntlLocale(widget.locale);
+
+  int get _firstYear => widget.system.decode(widget.firstDate).year;
+  int get _lastYear => widget.system.decode(widget.lastDate).year;
 
   @override
   void initState() {
@@ -75,18 +85,18 @@ class _DrumModeWidgetState extends State<DrumModeWidget> {
     }
   }
 
-  DateTime get _assembled => DateTime(_year, _month, _day);
+  DateTime get _assembled => widget.system.encode(_year, _month, _day);
 
   void _syncFrom(DateTime date) {
-    _year = date.year.clamp(_firstYear, _lastYear);
-    _month = date.month;
-    final maxDay = DrumDateUtils.daysInMonth(_year, _month);
-    _day = date.day.clamp(1, maxDay);
+    final c = widget.system.decode(date);
+    _year = c.year.clamp(_firstYear, _lastYear);
+    _month = c.month;
+    final maxDay = widget.system.daysInMonth(_year, _month);
+    _day = c.day.clamp(1, maxDay);
   }
 
   void _onColumnChanged() {
-    // Keep the day within the (possibly shorter) selected month.
-    final maxDay = DrumDateUtils.daysInMonth(_year, _month);
+    final maxDay = widget.system.daysInMonth(_year, _month);
     if (_day > maxDay) _day = maxDay;
 
     var candidate = DrumDateUtils.clamp(
@@ -125,7 +135,7 @@ class _DrumModeWidgetState extends State<DrumModeWidget> {
   }
 
   DrumColumn _buildDayColumn() {
-    final dayCount = DrumDateUtils.daysInMonth(_year, _month);
+    final dayCount = widget.system.daysInMonth(_year, _month);
     return DrumColumn(
       key: const ValueKey('drum-day'),
       label: 'DAY',
@@ -138,15 +148,16 @@ class _DrumModeWidgetState extends State<DrumModeWidget> {
       },
       itemBuilder: (index) {
         final day = index + 1;
-        if (!widget.showDayOfWeek) return '$day';
-        final dow = DateFormat.E(widget.localeName)
-            .format(DateTime(_year, _month, day));
-        return '$day\n$dow';
+        final number = DrumNumerals.format(day, _localeName);
+        if (!widget.showDayOfWeek) return number;
+        final dow = DateFormat.E(_localeName)
+            .format(widget.system.encode(_year, _month, day));
+        return '$number\n$dow';
       },
       semanticLabelBuilder: (index) {
         final day = index + 1;
-        return DateFormat.MMMMEEEEd(widget.localeName)
-            .format(DateTime(_year, _month, day));
+        return DateFormat.MMMMEEEEd(_localeName)
+            .format(widget.system.encode(_year, _month, day));
       },
     );
   }
@@ -162,10 +173,10 @@ class _DrumModeWidgetState extends State<DrumModeWidget> {
         _month = index + 1;
         _onColumnChanged();
       },
-      itemBuilder: (index) =>
-          DateFormat.MMM(widget.localeName).format(DateTime(2020, index + 1)),
-      semanticLabelBuilder: (index) =>
-          DateFormat.MMMM(widget.localeName).format(DateTime(2020, index + 1)),
+      itemBuilder: (index) => widget.system
+          .monthName(index + 1, abbreviated: true, locale: widget.locale),
+      semanticLabelBuilder: (index) => widget.system
+          .monthName(index + 1, abbreviated: false, locale: widget.locale),
     );
   }
 
@@ -181,8 +192,10 @@ class _DrumModeWidgetState extends State<DrumModeWidget> {
         _year = _firstYear + index;
         _onColumnChanged();
       },
-      itemBuilder: (index) => '${_firstYear + index}',
-      semanticLabelBuilder: (index) => '${_firstYear + index}',
+      itemBuilder: (index) =>
+          DrumNumerals.format(_firstYear + index, _localeName),
+      semanticLabelBuilder: (index) =>
+          DrumNumerals.format(_firstYear + index, _localeName),
     );
   }
 

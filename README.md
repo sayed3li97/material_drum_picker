@@ -33,6 +33,12 @@ the **Showcase** screen.
   to add an hour and minute drum, plus an AM/PM column in 12 hour mode.
 - **Time only.** Use `DrumTimePicker` or `showDrumTimePicker` to pick just a
   `TimeOfDay`, configurable for AM/PM or 24 hour mode.
+- **Hijri (Umm al-Qura) calendar.** Set `calendar: DrumCalendarType.hijri` to
+  show every date mode in the lunar Hijri calendar, composed with the existing
+  right to left layout. The returned value stays a Gregorian `DateTime`.
+- **Pluggable data backed calendars.** Drive the picker from a published
+  dataset of month start dates (for an official or committee lunar calendar)
+  with `TabularLunarCalendarSystem`, passed through `calendarSystem`.
 - **Full API parity** with `showDatePicker` and `CupertinoDatePicker`. Shared
   parameters keep the same names so migration is a one line change.
 - **`selectableDayPredicate`** to disable weekends, holidays, or any custom
@@ -67,6 +73,60 @@ Each function has an inline widget equivalent (`DrumPicker` and
 ### Time only
 
 ![time picker](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/time.png)
+
+### Hijri (Umm al-Qura)
+
+Show every date mode in the lunar Hijri calendar. The value you receive is still
+a Gregorian `DateTime`.
+
+```dart
+final picked = await showDrumDatePicker(
+  context: context,
+  firstDate: DateTime(2000),
+  lastDate: DateTime(2050),
+  calendar: DrumCalendarType.hijri,
+  locale: const Locale('ar'),
+);
+```
+
+The built in lunar calendar is Umm al-Qura, the official civil calendar of
+Saudi Arabia. The Persian solar (Jalali) calendar is a separate system and is
+not included; the abstraction is designed so it can be added later.
+
+![Hijri calendar with Arabic right to left](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/hijri.png)
+
+The same picker in Arabic flips right to left, shows Arabic month names and
+digits, and starts the week on Saturday, exactly the way the Gregorian calendar
+localizes. Set `showGregorianAlongside: true` to show the Gregorian equivalent
+under the headline.
+
+### Data backed calendars
+
+Some official and committee lunar calendars are published as data, year by year,
+and cannot be computed from a formula. Drive the picker from a dataset of month
+start dates with `TabularLunarCalendarSystem`, passed through `calendarSystem`,
+which takes precedence over `calendar`.
+
+```dart
+// Provide your own dataset of contiguous Hijri month starts, plus a trailing
+// sentinel entry (the start of the month after the last selectable month).
+final system = TabularLunarCalendarSystem.fromJsonList(jsonDecode(assetString));
+
+final picked = await showDrumDatePicker(
+  context: context,
+  firstDate: system.minSupported,
+  lastDate: system.maxSupported,
+  calendarSystem: system,
+  locale: const Locale('ar'),
+);
+```
+
+Calendars such as Taqweem al-Hadi (the Bahraini Ja'fari calendar) are expressed
+this way. The package ships only the mechanism and the documented schema, never
+any specific publisher's data. Supply the dataset from your own app, with the
+publisher's permission and attribution, and refresh it roughly once a Hijri
+year. Compare your `lastDate` with `system.maxSupported` to detect that the data
+is near its end.
 
 ## Installation
 
@@ -300,6 +360,12 @@ day of the week, AM/PM labels, the column order, and right to left layout. Pass
 `locale` and `textDirection` to override them for a single picker. The time
 format follows `MediaQuery.alwaysUse24HourFormat` unless you set `use24hFormat`.
 
+The calendar system is independent of locale and direction. You can combine any
+calendar with any locale: for example Umm al-Qura with `en` shows Latin digits
+and English Hijri month names, while Umm al-Qura with an Arabic locale shows the
+Arabic month names and that locale's digits, flipping right to left exactly the
+way the Gregorian calendar does.
+
 ## Migration from showDatePicker
 
 Most parameters keep the same name, so usually only the function name changes:
@@ -341,7 +407,9 @@ the development setup and the checks that run in CI, and note the
 - **v1.0** Single date picker (drum, calendar, and input modes).
 - **v1.1** Combined date and time picking (`pickTime`, `showDrumDateTimePicker`).
 - **v1.2** Standalone time picker (`DrumTimePicker`, `showDrumTimePicker`).
-- **Next** Date range selection (`showDrumDateRangePicker`).
+- **v1.3** Hijri (Umm al-Qura) calendar and pluggable data backed calendars.
+- **Next** Date range selection (`showDrumDateRangePicker`), and a Persian solar
+  (Jalali) calendar system.
 
 ## License
 
