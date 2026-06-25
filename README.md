@@ -93,6 +93,13 @@ The built in lunar calendar is Umm al-Qura, the official civil calendar of
 Saudi Arabia. The Persian solar (Jalali) calendar is a separate system and is
 not included; the abstraction is designed so it can be added later.
 
+![Hijri calendar with Arabic right to left](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/hijri.png)
+
+The same picker in Arabic flips right to left, shows Arabic month names and
+digits, and starts the week on Saturday, exactly the way the Gregorian calendar
+localizes. Set `showGregorianAlongside: true` to show the Gregorian equivalent
+under the headline.
+
 ### Data backed calendars
 
 Some official and committee lunar calendars are published as data, year by year,
