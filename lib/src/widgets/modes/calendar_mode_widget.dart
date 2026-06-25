@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../calendar/drum_calendar_system.dart';
+import '../../theme/drum_picker_theme.dart';
 import '../../utils/drum_date_utils.dart';
 import '../../utils/drum_locale_utils.dart';
 import '../../utils/drum_numerals.dart';
@@ -18,6 +19,7 @@ class CalendarModeWidget extends StatefulWidget {
     required this.currentDate,
     required this.system,
     required this.locale,
+    required this.tokens,
     required this.onChanged,
     this.selectableDayPredicate,
   });
@@ -39,6 +41,9 @@ class CalendarModeWidget extends StatefulWidget {
 
   /// The resolved locale for names and numerals.
   final Locale locale;
+
+  /// Resolved visual tokens.
+  final DrumPickerResolved tokens;
 
   /// Called with the new date when a day is tapped.
   final ValueChanged<DateTime> onChanged;
@@ -247,6 +252,7 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
         isEnabled: _isSelectable(date),
         isSelected: DrumDateUtils.isSameDay(date, widget.selectedDate),
         isToday: DrumDateUtils.isSameDay(date, widget.currentDate),
+        tokens: widget.tokens,
         onTap: () => _selectDay(date),
       ));
     }
@@ -277,12 +283,13 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
   }
 
   Widget _buildYearTile(BuildContext context, int year) {
-    final scheme = Theme.of(context).colorScheme;
+    final tokens = widget.tokens;
     final isSelected = year == _year;
     return Padding(
       padding: const EdgeInsets.all(4),
       child: Material(
-        color: isSelected ? scheme.primary : Colors.transparent,
+        color:
+            isSelected ? tokens.selectedDayBackgroundColor : Colors.transparent,
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
@@ -296,7 +303,9 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
             child: Text(
               DrumNumerals.format(year, _localeName),
               style: TextStyle(
-                color: isSelected ? scheme.onPrimary : scheme.onSurface,
+                color: isSelected
+                    ? tokens.selectedDayForegroundColor
+                    : tokens.dayForegroundColor,
                 fontWeight: isSelected ? FontWeight.w600 : null,
               ),
             ),

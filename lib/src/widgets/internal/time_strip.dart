@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../models/drum_picker_labels.dart';
 import '../../theme/drum_picker_theme.dart';
 import '../../utils/drum_date_utils.dart';
 import 'drum_column.dart';
@@ -18,6 +19,7 @@ class TimeStrip extends StatefulWidget {
     required this.minuteInterval,
     required this.tokens,
     required this.onChanged,
+    this.labels = const DrumPickerLabels(),
     this.localeName,
   });
 
@@ -35,6 +37,9 @@ class TimeStrip extends StatefulWidget {
 
   /// Called with the new time whenever a column settles.
   final ValueChanged<TimeOfDay> onChanged;
+
+  /// Overridable UI strings (column headers).
+  final DrumPickerLabels labels;
 
   /// The `intl` locale used to format AM/PM labels.
   final String? localeName;
@@ -105,7 +110,7 @@ class _TimeStripState extends State<TimeStrip> {
   Widget build(BuildContext context) {
     final hourColumn = DrumColumn(
       key: const ValueKey('time-hour'),
-      label: 'HOUR',
+      label: widget.labels.hourColumn,
       itemCount: widget.use24hFormat ? 24 : 12,
       selectedIndex: widget.use24hFormat
           ? _hour
@@ -119,7 +124,7 @@ class _TimeStripState extends State<TimeStrip> {
 
     final minuteColumn = DrumColumn(
       key: const ValueKey('time-minute'),
-      label: 'MIN',
+      label: widget.labels.minuteColumn,
       itemCount: _minuteCount,
       selectedIndex: _minute ~/ widget.minuteInterval,
       tokens: widget.tokens,
@@ -134,7 +139,7 @@ class _TimeStripState extends State<TimeStrip> {
     if (!widget.use24hFormat) {
       columns.add(DrumColumn(
         key: const ValueKey('time-meridiem'),
-        label: 'AM/PM',
+        label: widget.labels.meridiemColumn,
         itemCount: 2,
         selectedIndex: _isPm ? 1 : 0,
         tokens: widget.tokens,

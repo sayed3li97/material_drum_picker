@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart' show DateFormat;
 
+import '../models/drum_picker_labels.dart';
 import '../theme/drum_picker_theme.dart';
 import '../utils/drum_date_utils.dart';
 import '../utils/drum_locale_utils.dart';
@@ -29,6 +30,8 @@ class DrumTimePicker extends StatefulWidget {
     this.showActions = true,
     this.locale,
     this.textDirection,
+    this.theme,
+    this.labels = const DrumPickerLabels(),
     this.onChanged,
     this.onConfirmed,
     this.onCancelled,
@@ -71,6 +74,14 @@ class DrumTimePicker extends StatefulWidget {
   /// Text direction override.
   final TextDirection? textDirection;
 
+  /// Per instance visual token overrides, merged over any ambient
+  /// [DrumPickerTheme] extension and the Material 3 defaults.
+  final DrumPickerTheme? theme;
+
+  /// Overridable UI strings (the time strip column headers). Defaults to
+  /// English.
+  final DrumPickerLabels labels;
+
   /// Called every time the user changes the selected time.
   final ValueChanged<TimeOfDay>? onChanged;
 
@@ -109,7 +120,7 @@ class _DrumTimePickerState extends State<DrumTimePicker> {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = DrumPickerTheme.resolve(context);
+    final tokens = DrumPickerTheme.resolve(context, widget.theme);
     final localeName = DrumLocaleUtils.toIntlLocale(_effectiveLocale(context));
     final materialLocalizations = MaterialLocalizations.of(context);
     final use24h = widget.use24hFormat ??
@@ -130,6 +141,7 @@ class _DrumTimePickerState extends State<DrumTimePicker> {
           use24hFormat: use24h,
           minuteInterval: widget.minuteInterval,
           tokens: tokens,
+          labels: widget.labels,
           localeName: localeName,
           onChanged: _onTimeChanged,
         ),
@@ -149,29 +161,14 @@ class _DrumTimePickerState extends State<DrumTimePicker> {
     return Container(
       width: double.infinity,
       color: tokens.headerBackgroundColor,
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
+      padding: tokens.headerPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            widget.helpText ?? 'SELECT TIME',
-            style: TextStyle(
-              color: tokens.headerTextColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1,
-            ),
-          ),
+          Text(widget.helpText ?? 'SELECT TIME', style: tokens.helpTextStyle),
           const SizedBox(height: 8),
-          Text(
-            timeText,
-            style: TextStyle(
-              color: tokens.headerTextColor,
-              fontSize: 34,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
+          Text(timeText, style: tokens.timeHeadlineTextStyle),
         ],
       ),
     );
@@ -221,6 +218,8 @@ Future<TimeOfDay?> showDrumTimePicker({
   String? cancelText,
   Locale? locale,
   TextDirection? textDirection,
+  DrumPickerTheme? theme,
+  DrumPickerLabels labels = const DrumPickerLabels(),
   bool barrierDismissible = true,
   Color? barrierColor,
   String? barrierLabel,
@@ -238,6 +237,8 @@ Future<TimeOfDay?> showDrumTimePicker({
     cancelText: cancelText,
     locale: locale,
     textDirection: textDirection,
+    theme: theme,
+    labels: labels,
   );
 
   if (locale != null) {
@@ -277,6 +278,8 @@ class _DrumTimePickerDialog extends StatelessWidget {
     this.cancelText,
     this.locale,
     this.textDirection,
+    this.theme,
+    required this.labels,
   });
 
   final TimeOfDay? initialTime;
@@ -287,6 +290,8 @@ class _DrumTimePickerDialog extends StatelessWidget {
   final String? cancelText;
   final Locale? locale;
   final TextDirection? textDirection;
+  final DrumPickerTheme? theme;
+  final DrumPickerLabels labels;
 
   @override
   Widget build(BuildContext context) {
@@ -305,6 +310,8 @@ class _DrumTimePickerDialog extends StatelessWidget {
             cancelText: cancelText,
             locale: locale,
             textDirection: textDirection,
+            theme: theme,
+            labels: labels,
             onConfirmed: (time) => Navigator.of(context).pop(time),
             onCancelled: () => Navigator.of(context).pop(),
           ),

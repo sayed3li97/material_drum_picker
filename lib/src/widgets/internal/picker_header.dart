@@ -40,38 +40,20 @@ class PickerHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: tokens.headerBackgroundColor,
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
+      padding: tokens.headerPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            helpText,
-            style: TextStyle(
-              color: tokens.headerTextColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1,
-            ),
-          ),
+          Text(helpText, style: tokens.helpTextStyle),
           const SizedBox(height: 8),
           Text(
             timeText == null ? headline : '$headline  ·  $timeText',
-            style: TextStyle(
-              color: tokens.headerTextColor,
-              fontSize: 30,
-              fontWeight: FontWeight.w400,
-            ),
+            style: tokens.headlineTextStyle,
           ),
           if (secondaryText != null) ...[
             const SizedBox(height: 2),
-            Text(
-              secondaryText!,
-              style: TextStyle(
-                color: tokens.headerTextColor.withValues(alpha: 0.7),
-                fontSize: 13,
-              ),
-            ),
+            Text(secondaryText!, style: tokens.secondaryTextStyle),
           ],
         ],
       ),

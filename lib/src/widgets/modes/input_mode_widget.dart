@@ -26,6 +26,7 @@ class InputModeWidget extends StatefulWidget {
     this.errorInvalidText,
     this.fieldHintText,
     this.fieldLabelText,
+    this.decoration,
   });
 
   /// The currently-selected date (canonical Gregorian value).
@@ -60,6 +61,10 @@ class InputModeWidget extends StatefulWidget {
 
   /// Label text for the field. Defaults to `Enter Date`.
   final String? fieldLabelText;
+
+  /// Optional base decoration. The label, hint, error, helper, and suffix icon
+  /// are layered on top. When null an [OutlineInputBorder] is used.
+  final InputDecoration? decoration;
 
   @override
   State<InputModeWidget> createState() => _InputModeWidgetState();
@@ -175,8 +180,9 @@ class _InputModeWidgetState extends State<InputModeWidget> {
           FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩۰-۹/]')),
           LengthLimitingTextInputFormatter(10),
         ],
-        decoration: InputDecoration(
-          border: const OutlineInputBorder(),
+        decoration: (widget.decoration ??
+                const InputDecoration(border: OutlineInputBorder()))
+            .copyWith(
           labelText: widget.fieldLabelText ?? 'Enter Date',
           hintText: widget.fieldHintText ?? 'MM/DD/YYYY',
           errorText: _errorText,

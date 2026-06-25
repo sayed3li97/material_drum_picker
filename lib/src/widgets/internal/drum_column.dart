@@ -104,30 +104,15 @@ class _DrumColumnState extends State<DrumColumn> {
   @override
   Widget build(BuildContext context) {
     final tokens = widget.tokens;
-    final selectedStyle = TextStyle(
-      fontSize: 20,
-      fontWeight: FontWeight.w600,
-      color: tokens.selectedItemColor,
-    );
-    final unselectedStyle = TextStyle(
-      fontSize: 18,
-      color: tokens.unselectedItemColor,
-    );
+    final selectedStyle = tokens.selectedItemTextStyle;
+    final unselectedStyle = tokens.unselectedItemTextStyle;
 
     return Expanded(
       child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: 4),
-            child: Text(
-              widget.label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.8,
-                color: tokens.unselectedItemColor,
-              ),
-            ),
+            child: Text(widget.label, style: tokens.columnLabelTextStyle),
           ),
           SizedBox(
             height: tokens.itemExtent * tokens.visibleItemCount,
@@ -140,7 +125,8 @@ class _DrumColumnState extends State<DrumColumn> {
                       height: tokens.itemExtent,
                       decoration: BoxDecoration(
                         color: tokens.selectorBandColor,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius:
+                            BorderRadius.circular(tokens.selectorBandRadius),
                       ),
                     ),
                   ),

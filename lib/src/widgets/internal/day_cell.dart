@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/drum_picker_theme.dart';
+
 /// A single day cell in the calendar grid.
 ///
 /// Exposed (non-private) for widget tests. Not part of the public package API.
@@ -12,6 +14,7 @@ class DayCell extends StatelessWidget {
     required this.isSelected,
     required this.isToday,
     required this.onTap,
+    required this.tokens,
     this.label,
   });
 
@@ -34,20 +37,25 @@ class DayCell extends StatelessWidget {
   /// Called when an enabled cell is tapped.
   final VoidCallback onTap;
 
+  /// Resolved visual tokens.
+  final DrumPickerResolved tokens;
+
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
     Color background = Colors.transparent;
-    Color foreground = scheme.onSurface;
+    Color foreground = tokens.dayForegroundColor;
     if (isSelected) {
-      background = scheme.primary;
-      foreground = scheme.onPrimary;
+      background = tokens.selectedDayBackgroundColor;
+      foreground = tokens.selectedDayForegroundColor;
     } else if (!isEnabled) {
-      foreground = scheme.onSurface.withValues(alpha: 0.38);
+      foreground = tokens.disabledDayColor;
     } else if (isToday) {
-      foreground = scheme.primary;
+      foreground = tokens.todayColor;
     }
+
+    final shape = isToday && !isSelected
+        ? tokens.dayShape.copyWith(side: BorderSide(color: tokens.todayColor))
+        : tokens.dayShape;
 
     return Semantics(
       button: true,
@@ -62,11 +70,7 @@ class DayCell extends StatelessWidget {
           height: 44,
           child: Material(
             color: background,
-            shape: CircleBorder(
-              side: isToday && !isSelected
-                  ? BorderSide(color: scheme.primary)
-                  : BorderSide.none,
-            ),
+            shape: shape,
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: isEnabled ? onTap : null,

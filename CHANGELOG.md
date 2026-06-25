@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.4.0
+
+- **Deep visual theming.** `DrumPickerTheme` gains a much larger token set:
+  typography (`headlineTextStyle`, `helpTextStyle`, `secondaryTextStyle`,
+  `columnLabelTextStyle`, `selectedItemTextStyle`, `unselectedItemTextStyle`),
+  the calendar grid colors that were previously hard coded
+  (`dayForegroundColor`, `selectedDayBackgroundColor`,
+  `selectedDayForegroundColor`, `todayColor`, `disabledDayColor`), and shape and
+  spacing (`dayShape`, `selectorBandRadius`, `headerPadding`). Text style tokens
+  merge over the defaults, so you can change one field (for example the weight)
+  without losing the themed color.
+- **Per-instance theming.** `DrumPicker`, `DrumTimePicker`, and the
+  `showDrum*Picker` functions take a new `theme` parameter. It is merged over any
+  ambient `DrumPickerTheme` extension, so you can style a single picker without
+  touching the app theme. The calendar grid now honors the theme tokens too
+  (previously it always used the raw `ColorScheme`).
+- **Overridable labels.** New `DrumPickerLabels` lets you translate or relabel
+  the fixed UI strings that were not otherwise localized: the drum column
+  headers (DAY, MONTH, YEAR), the time strip headers (HOUR, MIN, AM/PM), the
+  mode toggle (Calendar, Drum, Input), and the default quick select chips.
+- **Custom input decoration.** A new `inputDecoration` parameter lets the input
+  mode field inherit your app's `InputDecorationTheme` or a custom decoration.
+- Fully backward compatible: every new token and parameter defaults to the
+  previous appearance and behavior, so existing output is unchanged.
+
 ## 1.3.0
 
 - **Hijri (Umm al-Qura) calendar.** Pass `calendar: DrumCalendarType.hijri` to

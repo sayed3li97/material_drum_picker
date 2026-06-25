@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../calendar/drum_calendar_system.dart';
 import '../models/drum_calendar_type.dart';
 import '../models/drum_column_order.dart';
+import '../models/drum_picker_labels.dart';
 import '../models/drum_picker_mode.dart';
 import '../models/drum_quick_select.dart';
+import '../theme/drum_picker_theme.dart';
 import 'drum_picker_dialog.dart';
 
 /// Shows a [DrumPicker] that selects both a date **and** a time of day.
@@ -48,6 +50,9 @@ Future<DateTime?> showDrumDateTimePicker({
   String? fieldLabelText,
   Locale? locale,
   TextDirection? textDirection,
+  DrumPickerTheme? theme,
+  DrumPickerLabels labels = const DrumPickerLabels(),
+  InputDecoration? inputDecoration,
   bool barrierDismissible = true,
   Color? barrierColor,
   String? barrierLabel,
@@ -85,6 +90,9 @@ Future<DateTime?> showDrumDateTimePicker({
     fieldLabelText: fieldLabelText,
     locale: locale,
     textDirection: textDirection,
+    theme: theme,
+    labels: labels,
+    inputDecoration: inputDecoration,
     barrierDismissible: barrierDismissible,
     barrierColor: barrierColor,
     barrierLabel: barrierLabel,

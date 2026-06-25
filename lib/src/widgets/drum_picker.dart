@@ -8,6 +8,7 @@ import '../calendar/gregorian_calendar_system.dart';
 import '../calendar/hijri/hijri_calendar_system.dart';
 import '../models/drum_calendar_type.dart';
 import '../models/drum_column_order.dart';
+import '../models/drum_picker_labels.dart';
 import '../models/drum_picker_mode.dart';
 import '../models/drum_quick_select.dart';
 import '../theme/drum_picker_theme.dart';
@@ -65,6 +66,9 @@ class DrumPicker extends StatefulWidget {
     this.showActions = true,
     this.locale,
     this.textDirection,
+    this.theme,
+    this.labels = const DrumPickerLabels(),
+    this.inputDecoration,
     this.onChanged,
     this.onConfirmed,
     this.onCancelled,
@@ -180,6 +184,20 @@ class DrumPicker extends StatefulWidget {
   /// Text direction override.
   final TextDirection? textDirection;
 
+  /// Per instance visual token overrides, merged over any ambient
+  /// [DrumPickerTheme] extension and the Material 3 defaults. Style a single
+  /// picker without touching the app theme.
+  final DrumPickerTheme? theme;
+
+  /// Overridable UI strings (drum column headers, time strip headers, mode tab
+  /// labels, and the default quick select chips). Defaults to English.
+  final DrumPickerLabels labels;
+
+  /// Optional base [InputDecoration] for the input mode text field. When null,
+  /// a default outlined decoration is used. The picker always overlays the
+  /// label, hint, error, helper, and suffix icon on top of it.
+  final InputDecoration? inputDecoration;
+
   /// Called every time the user changes the selected date (before confirming).
   final ValueChanged<DateTime>? onChanged;
 
@@ -283,13 +301,15 @@ class _DrumPickerState extends State<DrumPicker> {
     final reference = _currentDate;
     return [
       DrumQuickSelect.relative(
-          label: 'Today', offset: Duration.zero, referenceDate: reference),
+          label: widget.labels.today,
+          offset: Duration.zero,
+          referenceDate: reference),
       DrumQuickSelect.relative(
-          label: 'Tomorrow',
+          label: widget.labels.tomorrow,
           offset: const Duration(days: 1),
           referenceDate: reference),
       DrumQuickSelect.relative(
-          label: 'Next week',
+          label: widget.labels.nextWeek,
           offset: const Duration(days: 7),
           referenceDate: reference),
     ];
@@ -315,7 +335,7 @@ class _DrumPickerState extends State<DrumPicker> {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = DrumPickerTheme.resolve(context);
+    final tokens = DrumPickerTheme.resolve(context, widget.theme);
     final locale = _effectiveLocale(context) ?? const Locale('en');
     final localeName = DrumLocaleUtils.toIntlLocale(locale);
     final materialLocalizations = MaterialLocalizations.of(context);
@@ -343,7 +363,11 @@ class _DrumPickerState extends State<DrumPicker> {
           secondaryText: secondary,
         ),
         if (widget.showModeToggle)
-          ModeTabBar(mode: _mode, onModeChanged: _onModeChanged),
+          ModeTabBar(
+            mode: _mode,
+            labels: widget.labels,
+            onModeChanged: _onModeChanged,
+          ),
         _buildBody(tokens, locale),
         if (widget.pickTime)
           TimeStrip(
@@ -351,6 +375,7 @@ class _DrumPickerState extends State<DrumPicker> {
             use24hFormat: use24h,
             minuteInterval: widget.minuteInterval,
             tokens: tokens,
+            labels: widget.labels,
             localeName: localeName,
             onChanged: _onTimeChanged,
           ),
@@ -383,6 +408,7 @@ class _DrumPickerState extends State<DrumPicker> {
           tokens: tokens,
           system: _system,
           locale: locale,
+          labels: widget.labels,
           selectableDayPredicate: widget.selectableDayPredicate,
           onChanged: _onDateChanged,
         );
@@ -394,6 +420,7 @@ class _DrumPickerState extends State<DrumPicker> {
           currentDate: _currentDate,
           system: _system,
           locale: locale,
+          tokens: tokens,
           selectableDayPredicate: widget.selectableDayPredicate,
           onChanged: _onDateChanged,
         );
@@ -409,6 +436,7 @@ class _DrumPickerState extends State<DrumPicker> {
           errorInvalidText: widget.errorInvalidText,
           fieldHintText: widget.fieldHintText,
           fieldLabelText: widget.fieldLabelText,
+          decoration: widget.inputDecoration,
           onChanged: _onDateChanged,
         );
     }
