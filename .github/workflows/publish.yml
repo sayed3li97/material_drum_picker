@@ -1,17 +1,29 @@
 name: Publish to pub.dev
 
-# Publishes the package when a semver tag like v1.2.0 is pushed.
+# Publishes the package when a semver tag like v1.2.0 is pushed, or when a
+# GitHub Release for such a tag is published.
 #
 # This uses pub.dev automated publishing (OIDC), so there are no long lived
 # secrets. Before the first run, enable automated publishing for the package
 # on pub.dev (Admin tab) and allow this repository with a tag pattern of
 # v{{version}}.
 # See https://dart.dev/tools/pub/automated-publishing for details.
+#
+# Two ways to trigger this workflow:
+#   1. Push a tag vX.Y.Z. The "Release on merge to main" workflow does this
+#      automatically when a RELEASE_PAT secret is configured.
+#   2. Publish a GitHub Release whose tag is vX.Y.Z (Releases, Draft a new
+#      release). This path needs no secret, because a human published release
+#      can trigger workflows where the default GITHUB_TOKEN cannot. In both
+#      cases the run executes against the tag ref, which is what pub.dev's
+#      OIDC tag pattern check expects.
 
 on:
   push:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
+  release:
+    types: [published]
 
 jobs:
   publish:
