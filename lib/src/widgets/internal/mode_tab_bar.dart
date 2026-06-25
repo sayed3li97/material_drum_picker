@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../models/drum_picker_labels.dart';
 import '../../models/drum_picker_mode.dart';
 
 /// The segmented control that switches between Calendar, Drum and Input modes.
@@ -10,11 +11,15 @@ class ModeTabBar extends StatelessWidget {
   const ModeTabBar({
     super.key,
     required this.mode,
+    required this.labels,
     required this.onModeChanged,
   });
 
   /// The currently selected mode.
   final DrumPickerMode mode;
+
+  /// Overridable UI strings (tab labels).
+  final DrumPickerLabels labels;
 
   /// Called when the user selects a different mode.
   final ValueChanged<DrumPickerMode> onModeChanged;
@@ -25,21 +30,21 @@ class ModeTabBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: SegmentedButton<DrumPickerMode>(
         showSelectedIcon: false,
-        segments: const [
+        segments: [
           ButtonSegment<DrumPickerMode>(
             value: DrumPickerMode.calendar,
-            icon: Icon(Icons.calendar_today_outlined, size: 18),
-            label: Text('Calendar'),
+            icon: const Icon(Icons.calendar_today_outlined, size: 18),
+            label: Text(labels.calendarMode),
           ),
           ButtonSegment<DrumPickerMode>(
             value: DrumPickerMode.drum,
-            icon: Icon(Icons.view_day_outlined, size: 18),
-            label: Text('Drum'),
+            icon: const Icon(Icons.view_day_outlined, size: 18),
+            label: Text(labels.drumMode),
           ),
           ButtonSegment<DrumPickerMode>(
             value: DrumPickerMode.input,
-            icon: Icon(Icons.keyboard_outlined, size: 18),
-            label: Text('Input'),
+            icon: const Icon(Icons.keyboard_outlined, size: 18),
+            label: Text(labels.inputMode),
           ),
         ],
         selected: <DrumPickerMode>{mode},

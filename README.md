@@ -337,9 +337,14 @@ the value yourself with `onChanged`.
 
 ### DrumPickerTheme
 
-Add it to `ThemeData.extensions` to override individual tokens:
+`DrumPickerTheme` exposes the picker's colors, typography, shape, and spacing.
+Apply it app wide through `ThemeData.extensions`, or to a single picker through
+the `theme` parameter. A per instance `theme` is merged over the ambient
+extension, which is merged over Material 3 defaults derived from your
+`ColorScheme`, so you only set what you want to change.
 
 ```dart
+// App wide:
 ThemeData(
   useMaterial3: true,
   extensions: const [
@@ -350,6 +355,67 @@ ThemeData(
       visibleItemCount: 3,
     ),
   ],
+)
+
+// Just one picker, without touching the app theme:
+DrumPicker(
+  firstDate: DateTime(2000),
+  lastDate: DateTime(2100),
+  theme: const DrumPickerTheme(
+    // Calendar grid selection (previously not themeable).
+    selectedDayBackgroundColor: Colors.deepPurple,
+    selectedDayForegroundColor: Colors.white,
+    todayColor: Colors.deepPurple,
+    // Square-ish day cells instead of circles.
+    dayShape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(8)),
+    ),
+    // Typography tokens merge over the defaults, so this only changes weight.
+    headlineTextStyle: TextStyle(fontWeight: FontWeight.w700),
+    selectorBandRadius: 16,
+  ),
+)
+```
+
+Available tokens: `headerBackgroundColor`, `headerTextColor`,
+`cardBackgroundColor`, `selectorBandColor`, `selectedItemColor`,
+`unselectedItemColor`, `dayForegroundColor`, `selectedDayBackgroundColor`,
+`selectedDayForegroundColor`, `todayColor`, `disabledDayColor`, `helpTextStyle`,
+`headlineTextStyle`, `secondaryTextStyle`, `columnLabelTextStyle`,
+`selectedItemTextStyle`, `unselectedItemTextStyle`, `dayShape`,
+`selectorBandRadius`, `headerPadding`, `itemExtent`, and `visibleItemCount`.
+
+### DrumPickerLabels
+
+The drum column headers (DAY, MONTH, YEAR), the time strip headers (HOUR, MIN,
+AM/PM), the mode toggle (Calendar, Drum, Input), and the default quick select
+chips are fixed strings. Pass `DrumPickerLabels` to translate or relabel them:
+
+```dart
+DrumPicker(
+  firstDate: DateTime(2000),
+  lastDate: DateTime(2100),
+  labels: const DrumPickerLabels(
+    dayColumn: 'JOUR',
+    monthColumn: 'MOIS',
+    yearColumn: 'ANNEE',
+    calendarMode: 'Calendrier',
+    drumMode: 'Molette',
+    inputMode: 'Saisie',
+  ),
+)
+```
+
+### Custom input field decoration
+
+Pass `inputDecoration` so the input mode field matches your form styling (for
+example a filled field), instead of the default outlined border:
+
+```dart
+DrumPicker(
+  firstDate: DateTime(2000),
+  lastDate: DateTime(2100),
+  inputDecoration: const InputDecoration(filled: true),
 )
 ```
 

@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../calendar/drum_calendar_system.dart';
 import '../models/drum_calendar_type.dart';
 import '../models/drum_column_order.dart';
+import '../models/drum_picker_labels.dart';
 import '../models/drum_picker_mode.dart';
 import '../models/drum_quick_select.dart';
+import '../theme/drum_picker_theme.dart';
 import 'drum_picker.dart';
 
 /// Shows a [DrumPicker] in a Material Design 3 dialog.
@@ -51,6 +53,9 @@ Future<DateTime?> showDrumDatePicker({
   String? fieldLabelText,
   Locale? locale,
   TextDirection? textDirection,
+  DrumPickerTheme? theme,
+  DrumPickerLabels labels = const DrumPickerLabels(),
+  InputDecoration? inputDecoration,
   bool barrierDismissible = true,
   Color? barrierColor,
   String? barrierLabel,
@@ -90,6 +95,9 @@ Future<DateTime?> showDrumDatePicker({
     fieldLabelText: fieldLabelText,
     locale: locale,
     textDirection: textDirection,
+    theme: theme,
+    labels: labels,
+    inputDecoration: inputDecoration,
   );
 
   if (locale != null) {
@@ -149,6 +157,9 @@ class _DrumPickerDialog extends StatelessWidget {
     this.fieldLabelText,
     this.locale,
     this.textDirection,
+    this.theme,
+    required this.labels,
+    this.inputDecoration,
   });
 
   final DateTime? initialDate;
@@ -177,6 +188,9 @@ class _DrumPickerDialog extends StatelessWidget {
   final String? fieldLabelText;
   final Locale? locale;
   final TextDirection? textDirection;
+  final DrumPickerTheme? theme;
+  final DrumPickerLabels labels;
+  final InputDecoration? inputDecoration;
 
   @override
   Widget build(BuildContext context) {
@@ -213,6 +227,9 @@ class _DrumPickerDialog extends StatelessWidget {
             fieldLabelText: fieldLabelText,
             locale: locale,
             textDirection: textDirection,
+            theme: theme,
+            labels: labels,
+            inputDecoration: inputDecoration,
             onConfirmed: (date) => Navigator.of(context).pop(date),
             onCancelled: () => Navigator.of(context).pop(),
           ),

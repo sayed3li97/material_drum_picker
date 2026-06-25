@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../calendar/drum_calendar_system.dart';
 import '../../models/drum_column_order.dart';
+import '../../models/drum_picker_labels.dart';
 import '../../theme/drum_picker_theme.dart';
 import '../../utils/drum_date_utils.dart';
 import '../../utils/drum_locale_utils.dart';
@@ -23,6 +24,7 @@ class DrumModeWidget extends StatefulWidget {
     required this.tokens,
     required this.system,
     required this.locale,
+    required this.labels,
     required this.onChanged,
     this.selectableDayPredicate,
   });
@@ -50,6 +52,9 @@ class DrumModeWidget extends StatefulWidget {
 
   /// The resolved locale for names and numerals.
   final Locale locale;
+
+  /// Overridable UI strings (column headers).
+  final DrumPickerLabels labels;
 
   /// Called with the new date whenever a column settles.
   final ValueChanged<DateTime> onChanged;
@@ -138,7 +143,7 @@ class _DrumModeWidgetState extends State<DrumModeWidget> {
     final dayCount = widget.system.daysInMonth(_year, _month);
     return DrumColumn(
       key: const ValueKey('drum-day'),
-      label: 'DAY',
+      label: widget.labels.dayColumn,
       itemCount: dayCount,
       selectedIndex: _day - 1,
       tokens: widget.tokens,
@@ -165,7 +170,7 @@ class _DrumModeWidgetState extends State<DrumModeWidget> {
   DrumColumn _buildMonthColumn() {
     return DrumColumn(
       key: const ValueKey('drum-month'),
-      label: 'MONTH',
+      label: widget.labels.monthColumn,
       itemCount: 12,
       selectedIndex: _month - 1,
       tokens: widget.tokens,
@@ -184,7 +189,7 @@ class _DrumModeWidgetState extends State<DrumModeWidget> {
     final yearCount = _lastYear - _firstYear + 1;
     return DrumColumn(
       key: const ValueKey('drum-year'),
-      label: 'YEAR',
+      label: widget.labels.yearColumn,
       itemCount: yearCount,
       selectedIndex: _year - _firstYear,
       tokens: widget.tokens,

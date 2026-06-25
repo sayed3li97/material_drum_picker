@@ -6,6 +6,7 @@ library;
 // Models
 export 'src/models/drum_calendar_type.dart';
 export 'src/models/drum_column_order.dart';
+export 'src/models/drum_picker_labels.dart';
 export 'src/models/drum_picker_mode.dart';
 export 'src/models/drum_picker_value.dart';
 export 'src/models/drum_quick_select.dart';
