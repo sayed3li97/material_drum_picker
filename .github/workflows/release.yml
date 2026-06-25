@@ -5,7 +5,7 @@ name: Release on merge to main
 # Pushing the tag triggers the "Publish to pub.dev" workflow, which performs the
 # actual publish via pub.dev automated publishing (OIDC).
 #
-# One-time setup:
+# Setup for full automation:
 #   1. pub.dev: package Admin tab, enable automated publishing from GitHub
 #      Actions, repository sayed3li97/material_drum_picker, tag pattern
 #      v{{version}}.
@@ -13,6 +13,11 @@ name: Release on merge to main
 #      personal access token with "Contents: read and write" on this repo. The
 #      default GITHUB_TOKEN cannot be used here because tags it pushes do not
 #      trigger the publish workflow.
+#
+# If RELEASE_PAT is not set this workflow does not fail. It logs a warning and
+# skips tagging, so you can still publish by creating a GitHub Release with tag
+# vX.Y.Z (the publish workflow also triggers on a published release, which needs
+# no secret).
 #
 # To cut a release: bump `version` in pubspec.yaml, update CHANGELOG.md, and
 # merge to main. Re-running with an already published version is a safe no-op.
@@ -58,8 +63,8 @@ jobs:
           RELEASE_PAT: ${{ secrets.RELEASE_PAT }}
         run: |
           if [ -z "$RELEASE_PAT" ]; then
-            echo "::error::RELEASE_PAT secret is not set. Add a fine-grained PAT with Contents:write so the tag push can trigger the publish workflow."
-            exit 1
+            echo "::warning::RELEASE_PAT secret is not set, so this version was not tagged automatically. To publish v${{ steps.decide.outputs.version }}, either add a fine-grained PAT with Contents:write (full automation), or publish a GitHub Release with tag v${{ steps.decide.outputs.version }} (Releases, Draft a new release), which triggers the publish workflow without any secret."
+            exit 0
           fi
           tag="v${{ steps.decide.outputs.version }}"
           git config user.name "github-actions[bot]"

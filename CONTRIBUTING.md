@@ -90,17 +90,24 @@ version is new, tags it `vX.Y.Z`. That tag triggers `Publish to pub.dev`, which
 publishes through pub.dev automated publishing (OIDC). Merging without a version
 bump is a safe no-op.
 
-One-time setup required for the automation:
+pub.dev one-time setup (required for any automated publish):
 
 - **pub.dev**: package Admin tab, enable automated publishing from GitHub
   Actions for `sayed3li97/material_drum_picker` with tag pattern `v{{version}}`.
-- **GitHub**: add a repository secret `RELEASE_PAT`, a fine-grained personal
-  access token with `Contents: read and write` on this repo. It is needed so the
-  auto-created tag can trigger the publish workflow (the default `GITHUB_TOKEN`
-  cannot trigger one workflow from another).
 
-You can still cut a release by hand if preferred: `git tag v1.2.0 && git push
-origin v1.2.0`.
+Then pick one of two publish paths:
+
+- **Full automation (optional secret)**: add a repository secret `RELEASE_PAT`,
+  a fine-grained personal access token with `Contents: read and write` on this
+  repo. With it set, merging a version bump auto tags and publishes. The token
+  is needed because tags pushed by the default `GITHUB_TOKEN` cannot trigger the
+  publish workflow.
+- **No secret**: after merging the version bump, go to Releases, Draft a new
+  release, choose or create the tag `vX.Y.Z`, and publish it. A published
+  release triggers `Publish to pub.dev` directly. When `RELEASE_PAT` is absent
+  the merge workflow does not fail; it logs a warning and leaves tagging to you.
+
+You can also cut a release by hand: `git tag v1.2.0 && git push origin v1.2.0`.
 
 ## License
 
