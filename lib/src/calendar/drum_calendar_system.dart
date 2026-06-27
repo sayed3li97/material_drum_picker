@@ -1,5 +1,7 @@
 import 'dart:ui' show Locale;
 
+import '../utils/drum_locale_utils.dart';
+import '../utils/drum_numerals.dart';
 import 'calendar_date.dart';
 
 /// A pluggable calendar system for a `DrumPicker`.
@@ -24,7 +26,16 @@ abstract class DrumCalendarSystem {
   DateTime encode(int year, int month, int day);
 
   /// The number of months in a year. Always 12 for the calendars handled here.
+  ///
+  /// For calendars with a fixed month count, prefer this. For calendars whose
+  /// month count varies by year (leap months), override [monthsInYear].
   int get monthsPerYear => 12;
+
+  /// The number of months in [year]. Defaults to [monthsPerYear].
+  ///
+  /// The Chinese lunisolar calendar returns 12 or 13 (a leap year has an extra
+  /// month). The 1 based month positions then run from 1 to this value.
+  int monthsInYear(int year) => monthsPerYear;
 
   /// The number of days in [month] of [year] in this calendar.
   ///
@@ -38,6 +49,32 @@ abstract class DrumCalendarSystem {
   /// abbreviated and full distinction the Gregorian path uses.
   String monthName(int month,
       {required bool abbreviated, required Locale locale});
+
+  /// The label shown for the 1 based month [index] of [year] in the column,
+  /// headline, and grid header.
+  ///
+  /// The default renders a localized number when [numeric] is true, otherwise
+  /// the [monthName]. Calendars with leap months override this to account for
+  /// the leap marker and the difference between the sequence position and the
+  /// civil month number.
+  String monthLabel(
+    int year,
+    int index, {
+    required bool numeric,
+    required bool abbreviated,
+    required Locale locale,
+  }) {
+    if (numeric) {
+      return DrumNumerals.formatPadded(
+          index, 2, DrumLocaleUtils.toIntlLocale(locale));
+    }
+    return monthName(index, abbreviated: abbreviated, locale: locale);
+  }
+
+  /// An optional short annotation shown under the year in the drum year column
+  /// (for example the Chinese sexagenary cycle name and zodiac animal), or null
+  /// for none.
+  String? yearAnnotation(int year, Locale locale) => null;
 
   /// The earliest date this system can represent.
   DateTime get minSupported;

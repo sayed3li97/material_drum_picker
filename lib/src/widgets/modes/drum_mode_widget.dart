@@ -106,6 +106,8 @@ class _DrumModeWidgetState extends State<DrumModeWidget> {
   }
 
   void _onColumnChanged() {
+    final monthCount = widget.system.monthsInYear(_year);
+    if (_month > monthCount) _month = monthCount;
     final maxDay = widget.system.daysInMonth(_year, _month);
     if (_day > maxDay) _day = maxDay;
 
@@ -176,21 +178,29 @@ class _DrumModeWidgetState extends State<DrumModeWidget> {
     return DrumColumn(
       key: const ValueKey('drum-month'),
       label: widget.labels.monthColumn,
-      itemCount: 12,
+      itemCount: widget.system.monthsInYear(_year),
       selectedIndex: _month - 1,
       tokens: widget.tokens,
       onSelectedItemChanged: (index) {
         _month = index + 1;
         _onColumnChanged();
       },
-      itemBuilder: (index) => widget.monthFormat == DrumMonthFormat.numeric
-          ? DrumNumerals.formatPadded(index + 1, 2, _localeName)
-          : widget.system
-              .monthName(index + 1, abbreviated: true, locale: widget.locale),
-      // The screen reader always announces the full month name, even when the
-      // visible column shows a number, for clarity.
-      semanticLabelBuilder: (index) => widget.system
-          .monthName(index + 1, abbreviated: false, locale: widget.locale),
+      itemBuilder: (index) => widget.system.monthLabel(
+        _year,
+        index + 1,
+        numeric: widget.monthFormat == DrumMonthFormat.numeric,
+        abbreviated: true,
+        locale: widget.locale,
+      ),
+      // The screen reader announces the full month label, including the leap
+      // marker for calendars that have one.
+      semanticLabelBuilder: (index) => widget.system.monthLabel(
+        _year,
+        index + 1,
+        numeric: false,
+        abbreviated: false,
+        locale: widget.locale,
+      ),
     );
   }
 

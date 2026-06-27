@@ -12,4 +12,8 @@ enum DrumCalendarType {
   /// The lunar Hijri calendar using the Umm al-Qura tabular data, the official
   /// civil calendar of Saudi Arabia.
   hijri,
+
+  /// The Chinese lunisolar calendar, with leap months (12 or 13 months a year),
+  /// astronomically computed month lengths, and sexagenary year names.
+  chinese,
 }

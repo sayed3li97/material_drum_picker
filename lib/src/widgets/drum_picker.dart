@@ -3,6 +3,7 @@ import 'package:flutter/semantics.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart' show DateFormat;
 
+import '../calendar/chinese/chinese_calendar_system.dart';
 import '../calendar/drum_calendar_system.dart';
 import '../calendar/gregorian_calendar_system.dart';
 import '../calendar/hijri/hijri_calendar_system.dart';
@@ -248,9 +249,11 @@ class _DrumPickerState extends State<DrumPicker> {
     // Resolve the active calendar system. An explicit system wins over the
     // enum.
     _system = widget.calendarSystem ??
-        (widget.calendar == DrumCalendarType.hijri
-            ? const HijriCalendarSystem()
-            : const GregorianCalendarSystem());
+        switch (widget.calendar) {
+          DrumCalendarType.hijri => const HijriCalendarSystem(),
+          DrumCalendarType.chinese => const ChineseCalendarSystem(),
+          DrumCalendarType.gregorian => const GregorianCalendarSystem(),
+        };
 
     // Intersect the caller's range with the system's supported range so that
     // conversions never run past the calendar's bounds.
@@ -341,7 +344,8 @@ class _DrumPickerState extends State<DrumPicker> {
     }
     final c = _system.decode(_selectedDate);
     final weekday = DateFormat.E(localeName).format(_selectedDate);
-    final month = _system.monthName(c.month, abbreviated: true, locale: locale);
+    final month = _system.monthLabel(c.year, c.month,
+        numeric: false, abbreviated: true, locale: locale);
     final day = DrumNumerals.format(c.day, localeName);
     return '$weekday, $month $day';
   }
@@ -356,10 +360,18 @@ class _DrumPickerState extends State<DrumPicker> {
         MediaQuery.maybeOf(context)?.alwaysUse24HourFormat ??
         false;
 
-    final secondary =
+    // The secondary header line can carry the calendar's year annotation (for
+    // example the Chinese sexagenary year and zodiac) and/or the Gregorian
+    // equivalent when showGregorianAlongside is set.
+    final annotation =
+        _system.yearAnnotation(_system.decode(_selectedDate).year, locale);
+    final gregorian =
         widget.showGregorianAlongside && _system is! GregorianCalendarSystem
             ? DateFormat.yMMMMd(localeName).format(_selectedDate)
             : null;
+    final secondaryParts = [annotation, gregorian].whereType<String>().toList();
+    final secondary =
+        secondaryParts.isEmpty ? null : secondaryParts.join('  ·  ');
 
     Widget content = Column(
       mainAxisSize: MainAxisSize.min,

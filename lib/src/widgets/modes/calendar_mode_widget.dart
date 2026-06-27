@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../calendar/calendar_date.dart';
 import '../../calendar/drum_calendar_system.dart';
 import '../../theme/drum_picker_theme.dart';
 import '../../utils/drum_date_utils.dart';
@@ -94,26 +95,50 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
         (widget.selectableDayPredicate?.call(date) ?? true);
   }
 
-  int get _firstLinear {
-    final c = widget.system.decode(widget.firstDate);
-    return c.year * 12 + (c.month - 1);
-  }
+  // Month navigation is expressed as (year, monthIndex) pairs rather than a
+  // single linear index, because a year can have a variable number of months
+  // (the Chinese calendar has 12 or 13). Comparison is lexicographic.
+  CalendarDate get _firstYm => widget.system.decode(widget.firstDate);
+  CalendarDate get _lastYm => widget.system.decode(widget.lastDate);
 
-  int get _lastLinear {
-    final c = widget.system.decode(widget.lastDate);
-    return c.year * 12 + (c.month - 1);
-  }
+  bool _isBeforeYm(int y1, int m1, int y2, int m2) =>
+      y1 < y2 || (y1 == y2 && m1 < m2);
 
-  int get _displayedLinear => _year * 12 + (_month - 1);
-
-  bool get _canGoPrev => _displayedLinear > _firstLinear;
-  bool get _canGoNext => _displayedLinear < _lastLinear;
+  bool get _canGoPrev =>
+      _isBeforeYm(_firstYm.year, _firstYm.month, _year, _month);
+  bool get _canGoNext =>
+      _isBeforeYm(_year, _month, _lastYm.year, _lastYm.month);
 
   void _changeMonth(int delta) {
-    final target = (_displayedLinear + delta).clamp(_firstLinear, _lastLinear);
+    var y = _year;
+    var m = _month;
+    for (var i = 0; i < delta.abs(); i++) {
+      if (delta > 0) {
+        if (m < widget.system.monthsInYear(y)) {
+          m++;
+        } else {
+          y++;
+          m = 1;
+        }
+      } else {
+        if (m > 1) {
+          m--;
+        } else {
+          y--;
+          m = widget.system.monthsInYear(y);
+        }
+      }
+    }
+    if (_isBeforeYm(y, m, _firstYm.year, _firstYm.month)) {
+      y = _firstYm.year;
+      m = _firstYm.month;
+    } else if (_isBeforeYm(_lastYm.year, _lastYm.month, y, m)) {
+      y = _lastYm.year;
+      m = _lastYm.month;
+    }
     setState(() {
-      _year = target ~/ 12;
-      _month = target % 12 + 1;
+      _year = y;
+      _month = m;
     });
   }
 
@@ -184,8 +209,8 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    final monthName = widget.system
-        .monthName(_month, abbreviated: false, locale: widget.locale);
+    final monthName = widget.system.monthLabel(_year, _month,
+        numeric: false, abbreviated: false, locale: widget.locale);
     final label = '$monthName ${DrumNumerals.format(_year, _localeName)}';
     return Row(
       children: [
@@ -296,6 +321,7 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
           onTap: () {
             setState(() {
               _year = year;
+              _month = _month.clamp(1, widget.system.monthsInYear(year));
               _showYearGrid = false;
             });
           },
