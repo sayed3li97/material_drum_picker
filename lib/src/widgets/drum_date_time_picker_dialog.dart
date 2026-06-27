@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../calendar/drum_calendar_system.dart';
 import '../models/drum_calendar_type.dart';
 import '../models/drum_column_order.dart';
+import '../models/drum_date_format.dart';
+import '../models/drum_month_format.dart';
 import '../models/drum_picker_labels.dart';
 import '../models/drum_picker_mode.dart';
 import '../models/drum_quick_select.dart';
@@ -34,6 +36,8 @@ Future<DateTime?> showDrumDateTimePicker({
   bool showModeToggle = true,
   DrumColumnOrder? columnOrder,
   bool showDayOfWeekInDrum = false,
+  DrumMonthFormat monthFormat = DrumMonthFormat.name,
+  DrumDateFormat inputFormat = DrumDateFormat.mdy,
   bool showQuickSelects = true,
   List<DrumQuickSelect>? quickSelectOptions,
   DrumCalendarType calendar = DrumCalendarType.gregorian,
@@ -73,6 +77,8 @@ Future<DateTime?> showDrumDateTimePicker({
     showModeToggle: showModeToggle,
     columnOrder: columnOrder,
     showDayOfWeekInDrum: showDayOfWeekInDrum,
+    monthFormat: monthFormat,
+    inputFormat: inputFormat,
     showQuickSelects: showQuickSelects,
     quickSelectOptions: quickSelectOptions,
     calendar: calendar,

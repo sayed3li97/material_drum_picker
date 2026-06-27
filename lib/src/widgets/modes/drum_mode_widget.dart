@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../calendar/drum_calendar_system.dart';
 import '../../models/drum_column_order.dart';
+import '../../models/drum_month_format.dart';
 import '../../models/drum_picker_labels.dart';
 import '../../theme/drum_picker_theme.dart';
 import '../../utils/drum_date_utils.dart';
@@ -25,6 +26,7 @@ class DrumModeWidget extends StatefulWidget {
     required this.system,
     required this.locale,
     required this.labels,
+    required this.monthFormat,
     required this.onChanged,
     this.selectableDayPredicate,
   });
@@ -55,6 +57,9 @@ class DrumModeWidget extends StatefulWidget {
 
   /// Overridable UI strings (column headers).
   final DrumPickerLabels labels;
+
+  /// Whether the month column shows the month name or its number.
+  final DrumMonthFormat monthFormat;
 
   /// Called with the new date whenever a column settles.
   final ValueChanged<DateTime> onChanged;
@@ -178,8 +183,12 @@ class _DrumModeWidgetState extends State<DrumModeWidget> {
         _month = index + 1;
         _onColumnChanged();
       },
-      itemBuilder: (index) => widget.system
-          .monthName(index + 1, abbreviated: true, locale: widget.locale),
+      itemBuilder: (index) => widget.monthFormat == DrumMonthFormat.numeric
+          ? DrumNumerals.formatPadded(index + 1, 2, _localeName)
+          : widget.system
+              .monthName(index + 1, abbreviated: true, locale: widget.locale),
+      // The screen reader always announces the full month name, even when the
+      // visible column shows a number, for clarity.
       semanticLabelBuilder: (index) => widget.system
           .monthName(index + 1, abbreviated: false, locale: widget.locale),
     );
