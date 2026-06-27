@@ -36,6 +36,10 @@ the **Showcase** screen.
 - **Hijri (Umm al-Qura) calendar.** Set `calendar: DrumCalendarType.hijri` to
   show every date mode in the lunar Hijri calendar, composed with the existing
   right to left layout. The returned value stays a Gregorian `DateTime`.
+- **Chinese (lunisolar) calendar.** Set `calendar: DrumCalendarType.chinese` for
+  the Chinese calendar with full leap month support (12 or 13 months a year),
+  astronomical month lengths, traditional month names, and the sexagenary year
+  and zodiac.
 - **Pluggable data backed calendars.** Drive the picker from a published
   dataset of month start dates (for an official or committee lunar calendar)
   with `TabularLunarCalendarSystem`, passed through `calendarSystem`.
@@ -102,6 +106,39 @@ The same picker in Arabic flips right to left, shows Arabic month names and
 digits, and starts the week on Saturday, exactly the way the Gregorian calendar
 localizes. Set `showGregorianAlongside: true` to show the Gregorian equivalent
 under the headline.
+
+### Chinese (lunisolar)
+
+Pass `calendar: DrumCalendarType.chinese` to present every date mode in the
+Chinese lunisolar calendar. The value you receive is still a Gregorian
+`DateTime`.
+
+```dart
+final picked = await showDrumDatePicker(
+  context: context,
+  firstDate: DateTime(2000),
+  lastDate: DateTime(2050),
+  calendar: DrumCalendarType.chinese,
+  locale: const Locale('zh'),
+);
+```
+
+![Chinese lunisolar calendar with leap months](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/chinese.png)
+
+The Chinese calendar is the hardest to support correctly, and it is fully
+handled: a leap year has **13 months** (the leap month 闰月 repeats the previous
+month's number), month lengths (29 or 30 days) and the leap month placement are
+astronomical, traditional month names are shown (正月 ... 十二月, with a 闰
+prefix for the leap month), and the **sexagenary year and zodiac** (for example
+癸卯, Rabbit) appear under the headline. English locales show numbered months
+with a `Leap N` marker.
+
+The month length and leap data is computed from the BSD licensed
+[sxtwl](https://github.com/yuangu/sxtwl_cpp) astronomical engine, cross
+validated against a second engine, and vendored as a pure Dart table for lunar
+years 1900-2100. As with every Chinese calendar implementation, dates far in the
+future are predictive, since official ephemerides are published only a few years
+ahead.
 
 ### Data backed calendars
 
