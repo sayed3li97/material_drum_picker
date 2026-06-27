@@ -8,6 +8,8 @@ import '../calendar/gregorian_calendar_system.dart';
 import '../calendar/hijri/hijri_calendar_system.dart';
 import '../models/drum_calendar_type.dart';
 import '../models/drum_column_order.dart';
+import '../models/drum_date_format.dart';
+import '../models/drum_month_format.dart';
 import '../models/drum_picker_labels.dart';
 import '../models/drum_picker_mode.dart';
 import '../models/drum_quick_select.dart';
@@ -48,6 +50,8 @@ class DrumPicker extends StatefulWidget {
     this.showModeToggle = true,
     this.columnOrder,
     this.showDayOfWeekInDrum = false,
+    this.monthFormat = DrumMonthFormat.name,
+    this.inputFormat = DrumDateFormat.mdy,
     this.showQuickSelects = true,
     this.quickSelectOptions,
     this.calendar = DrumCalendarType.gregorian,
@@ -111,6 +115,15 @@ class DrumPicker extends StatefulWidget {
   /// Whether to show the day-of-week abbreviation below each day in the drum
   /// day column.
   final bool showDayOfWeekInDrum;
+
+  /// Whether the drum month column shows the month name (default) or its
+  /// number. Works with any calendar system and locale.
+  final DrumMonthFormat monthFormat;
+
+  /// The field order, separator, and year width for the keyboard input mode.
+  /// Defaults to `MM/DD/YYYY` ([DrumDateFormat.mdy]). Build a custom one with
+  /// [DrumDateFormat.parse], for example `DrumDateFormat.parse('DD-MM-YYYY')`.
+  final DrumDateFormat inputFormat;
 
   /// Whether to show quick-select chips in calendar mode.
   final bool showQuickSelects;
@@ -409,6 +422,7 @@ class _DrumPickerState extends State<DrumPicker> {
           system: _system,
           locale: locale,
           labels: widget.labels,
+          monthFormat: widget.monthFormat,
           selectableDayPredicate: widget.selectableDayPredicate,
           onChanged: _onDateChanged,
         );
@@ -431,6 +445,7 @@ class _DrumPickerState extends State<DrumPicker> {
           lastDate: _last,
           system: _system,
           locale: locale,
+          format: widget.inputFormat,
           selectableDayPredicate: widget.selectableDayPredicate,
           errorFormatText: widget.errorFormatText,
           errorInvalidText: widget.errorInvalidText,

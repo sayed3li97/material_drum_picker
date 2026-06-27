@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.5.0
+
+- **Month as a name or a number.** New `monthFormat` parameter
+  (`DrumMonthFormat.name` or `.numeric`) switches the drum month column between
+  the abbreviated month name (the default) and a zero padded number. It works
+  with every calendar system and locale, since a numeric month is just the
+  month index in the locale's digits.
+- **Configurable typed date format.** New `inputFormat` parameter takes a
+  `DrumDateFormat` that controls the keyboard input mode: the order of the day,
+  month, and year fields, the separator, and whether the year is two or four
+  digits. Build one from a pattern with `DrumDateFormat.parse('DD-MM-YYYY')`, or
+  use a preset (`DrumDateFormat.mdy`, `.dmy`, `.ymd`). The format drives the
+  field's value, hint, and parsing in whatever calendar the picker is using, and
+  a two digit year is resolved into the supported range at the year nearest the
+  current selection.
+- Both additions default to the previous behavior (month names and `MM/DD/YYYY`)
+  and are available on `DrumPicker`, `showDrumDatePicker`, and
+  `showDrumDateTimePicker`. Existing output is unchanged.
+
 ## 1.4.0
 
 - **Deep visual theming.** `DrumPickerTheme` gains a much larger token set:

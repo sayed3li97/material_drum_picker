@@ -46,8 +46,11 @@ the **Showcase** screen.
 - **`quickSelectOptions`** for custom chips such as Today, Next Monday, or
   +3 Days.
 - **`columnOrder`** for Day/Month/Year, Month/Day/Year, or Year/Month/Day.
-- **Material 3 theming** through `ColorScheme` tokens, with per app overrides
-  via the `DrumPickerTheme` extension.
+- **`monthFormat`** to show the drum month as a name or a number, and
+  **`inputFormat`** to control the typed date layout (for example
+  `DrumDateFormat.parse('DD-MM-YYYY')`).
+- **Material 3 theming** through `ColorScheme` tokens, with per app or per
+  picker overrides via the `DrumPickerTheme` extension.
 - **Right to left support** for Arabic, Hebrew, and Persian, with the weekday
   and column order flipping automatically.
 - **Accessibility:** 44dp touch targets, keyboard navigation in the calendar,
@@ -261,6 +264,8 @@ showDrumDatePicker(
 | `initialMode` | `DrumPickerMode` | `.drum` | Starting date mode |
 | `showModeToggle` | `bool` | `true` | Show the mode tabs |
 | `columnOrder` | `DrumColumnOrder?` | locale default | Column order in drum mode |
+| `monthFormat` | `DrumMonthFormat` | `.name` | Drum month as a name or a number |
+| `inputFormat` | `DrumDateFormat` | `.mdy` | Typed input order, separator, year width |
 | `showDayOfWeekInDrum` | `bool` | `false` | Show weekday in the drum day column |
 | `showQuickSelects` | `bool` | `true` | Show quick select chips |
 | `quickSelectOptions` | `List<DrumQuickSelect>?` | Today/Tomorrow/+7d | Custom chips |
@@ -418,6 +423,43 @@ DrumPicker(
   inputDecoration: const InputDecoration(filled: true),
 )
 ```
+
+### Month as a name or a number, and a custom typed format
+
+![month formats and a custom typed input format](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/formats.png)
+
+Use `monthFormat` to show the drum month column as a name (default) or as a
+zero padded number. It works with every calendar system and locale.
+
+```dart
+DrumPicker(
+  firstDate: DateTime(2000),
+  lastDate: DateTime(2100),
+  monthFormat: DrumMonthFormat.numeric, // 06 instead of Jun
+)
+```
+
+Use `inputFormat` to control how the keyboard input mode lays out a date: the
+order of the day, month, and year fields, the separator, and whether the year is
+two or four digits. Build one from a pattern, or use a preset
+(`DrumDateFormat.mdy`, `.dmy`, `.ymd`):
+
+```dart
+DrumPicker(
+  firstDate: DateTime(2000),
+  lastDate: DateTime(2100),
+  inputFormat: DrumDateFormat.parse('DD-MM-YYYY'),
+  // Other examples:
+  //   DrumDateFormat.parse('YYYY.MM.DD')
+  //   DrumDateFormat.parse('DD/MM/YY')   // two digit year
+  //   DrumDateFormat.ymd                 // ISO style YYYY-MM-DD
+)
+```
+
+The format drives how the field shows the current value, the hint, and how it
+parses what the user types, in whatever calendar the picker is using. A two
+digit year is resolved into the supported range at the year nearest the current
+selection. For the drum wheel column order, use `columnOrder`.
 
 ## Localization
 
