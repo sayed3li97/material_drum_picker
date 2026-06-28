@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/basic_screen.dart';
 import 'screens/birth_date_screen.dart';
 import 'screens/booking_screen.dart';
+import 'screens/chinese_screen.dart';
 import 'screens/custom_theme_screen.dart';
 import 'screens/data_backed_calendar_screen.dart';
 import 'screens/date_time_screen.dart';
@@ -39,6 +40,7 @@ class ExampleApp extends StatelessWidget {
         Locale('fr'),
         Locale('ar'),
         Locale('ja'),
+        Locale('zh'),
       ],
       home: const HomeScreen(),
     );
@@ -55,6 +57,7 @@ class HomeScreen extends StatelessWidget {
     ('Date + time', 'Combined date & time picker', _dateTime),
     ('Time only', '12-hour and 24-hour time picker', _time),
     ('Hijri', 'Umm al-Qura calendar in Arabic', _hijri),
+    ('Chinese', 'Lunisolar calendar with leap months', _chinese),
     ('Data backed', 'Committee calendar from a dataset', _dataBacked),
     ('Basic', 'Drop-in replacement for showDatePicker', _basic),
     ('Birth date', 'Drum mode, locked, min/max age', _birth),
@@ -70,6 +73,7 @@ class HomeScreen extends StatelessWidget {
   static Widget _dateTime(BuildContext c) => const DateTimeScreen();
   static Widget _time(BuildContext c) => const TimeScreen();
   static Widget _hijri(BuildContext c) => const HijriScreen();
+  static Widget _chinese(BuildContext c) => const ChineseScreen();
   static Widget _dataBacked(BuildContext c) => const DataBackedCalendarScreen();
   static Widget _basic(BuildContext c) => const BasicScreen();
   static Widget _birth(BuildContext c) => const BirthDateScreen();

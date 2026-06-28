@@ -221,8 +221,8 @@ class _InputModeWidgetState extends State<InputModeWidget> {
   String _preview(DateTime date) {
     final c = widget.system.decode(date);
     final weekday = DateFormat.EEEE(_localeName).format(date);
-    final month = widget.system
-        .monthName(c.month, abbreviated: false, locale: widget.locale);
+    final month = widget.system.monthLabel(c.year, c.month,
+        numeric: false, abbreviated: false, locale: widget.locale);
     final day = DrumNumerals.format(c.day, _localeName);
     final year = DrumNumerals.format(c.year, _localeName);
     return '$weekday, $month $day, $year';

@@ -17,6 +17,8 @@ export 'src/models/drum_quick_select.dart';
 export 'src/calendar/calendar_date.dart';
 export 'src/calendar/drum_calendar_system.dart';
 export 'src/calendar/gregorian_calendar_system.dart';
+export 'src/calendar/chinese/chinese_calendar_system.dart'
+    show ChineseCalendarSystem;
 export 'src/calendar/hijri/hijri_calendar_system.dart' show HijriCalendarSystem;
 export 'src/calendar/tabular_lunar_calendar_system.dart'
     show TabularLunarCalendarSystem, TabularLunarMonth;

@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.6.0
+
+- **Chinese lunisolar calendar.** Pass `calendar: DrumCalendarType.chinese` to
+  present the drum, calendar, and input modes in the Chinese calendar. It fully
+  supports leap months (a leap year has 13 months, with the leap month 闰月
+  repeating the previous month's number), astronomically determined month
+  lengths (29 or 30 days), traditional month names (正月 ... 十二月, 闰二月), and
+  the sexagenary year with its zodiac animal (for example 癸卯, Rabbit) shown
+  under the headline. The returned value is always a Gregorian `DateTime`.
+- The month length and leap month data is computed from the BSD licensed sxtwl
+  astronomical engine, cross validated against a second engine, and vendored as
+  a pure Dart table (lunar years 1900-2100), so the package keeps its only
+  runtime dependencies as Flutter and `intl`. No third party engine is shipped.
+- New public type `ChineseCalendarSystem`, and `DrumCalendarType.chinese`.
+- Core calendar API additions (non breaking): `CalendarDate.isLeapMonth`,
+  `DrumCalendarSystem.monthsInYear`, `monthLabel`, and `yearAnnotation`, with
+  defaults that leave the Gregorian and Hijri calendars unchanged. Custom
+  `DrumCalendarSystem` implementations with leap months or a variable month
+  count are now possible.
+
 ## 1.5.0
 
 - **Month as a name or a number.** New `monthFormat` parameter
