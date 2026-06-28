@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.7.0
+
+- **Working days only.** New optional `disabledWeekdays` makes the given
+  weekdays unselectable in every mode, using the `DateTime.weekday` convention.
+  For a working days only picker pass the weekend, for example
+  `{DateTime.saturday, DateTime.sunday}` (or `{DateTime.friday,
+  DateTime.saturday}` in much of the Middle East).
+- **Holidays.** New optional `holidays` (a `Set<DateTime>`) marks specific dates
+  as unselectable, compared by calendar day and ignoring the time component.
+- **First day of the week.** New optional `firstDayOfWeek` overrides the
+  locale's start of week in calendar mode (`DateTime.monday` to
+  `DateTime.sunday`).
+- `disabledWeekdays`, `holidays`, and `selectableDayPredicate` combine: a day is
+  selectable only when it passes all of them, consistently across the drum,
+  calendar, and input modes. The opening date snaps to the nearest selectable
+  day, so a default that lands on a weekend or holiday does not start disabled.
+- All three options are available on `DrumPicker`, `showDrumDatePicker`, and
+  `showDrumDateTimePicker`, and all are optional with no change to existing
+  behavior.
+
 ## 1.6.0
 
 - **Chinese lunisolar calendar.** Pass `calendar: DrumCalendarType.chinese` to

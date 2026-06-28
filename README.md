@@ -47,6 +47,9 @@ the **Showcase** screen.
   parameters keep the same names so migration is a one line change.
 - **`selectableDayPredicate`** to disable weekends, holidays, or any custom
   rule, enforced in all three date modes.
+- **Working days, holidays, and first day of week.** `disabledWeekdays` for a
+  working days only picker, `holidays` for specific blocked dates, and
+  `firstDayOfWeek` to start the week on any day. All optional.
 - **`quickSelectOptions`** for custom chips such as Today, Next Monday, or
   +3 Days.
 - **`columnOrder`** for Day/Month/Year, Month/Day/Year, or Year/Month/Day.
@@ -298,6 +301,9 @@ showDrumDatePicker(
 | `initialDate` | `DateTime?` | today | Pre selected date |
 | `currentDate` | `DateTime?` | `DateTime.now()` | The "today" marker |
 | `selectableDayPredicate` | `SelectableDayPredicate?` | null | Return false to disable a day |
+| `disabledWeekdays` | `Set<int>?` | null | Weekdays (Mon=1..Sun=7) that cannot be selected |
+| `holidays` | `Set<DateTime>?` | null | Specific dates that cannot be selected |
+| `firstDayOfWeek` | `int?` | locale default | First weekday in calendar mode (Mon=1..Sun=7) |
 | `initialMode` | `DrumPickerMode` | `.drum` | Starting date mode |
 | `showModeToggle` | `bool` | `true` | Show the mode tabs |
 | `columnOrder` | `DrumColumnOrder?` | locale default | Column order in drum mode |
@@ -447,6 +453,34 @@ DrumPicker(
   ),
 )
 ```
+
+### Working days, holidays, and first day of week
+
+![working days, a disabled holiday, and a Monday start](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/working_days.png)
+
+Three optional parameters cover the common business scheduling rules:
+
+```dart
+DrumPicker(
+  firstDate: DateTime(2024, 1, 1),
+  lastDate: DateTime(2024, 12, 31),
+  // Only working days are selectable (pass the weekend to disable).
+  disabledWeekdays: const {DateTime.saturday, DateTime.sunday},
+  // Specific public holidays are blocked (time is ignored).
+  holidays: {DateTime(2024, 12, 25), DateTime(2024, 1, 1)},
+  // The calendar week starts on Monday.
+  firstDayOfWeek: DateTime.monday,
+)
+```
+
+- `disabledWeekdays`, `holidays`, and `selectableDayPredicate` are combined: a
+  day is selectable only when it passes all of them, in the drum, calendar, and
+  input modes alike.
+- The opening date snaps to the nearest selectable day, so a default that lands
+  on a weekend or holiday never starts on a disabled day.
+- All three use the `DateTime.weekday` convention (`DateTime.monday` == 1 to
+  `DateTime.sunday` == 7) and are null by default (nothing disabled, locale
+  default week start).
 
 ### Custom input field decoration
 
