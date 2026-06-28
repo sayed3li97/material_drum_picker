@@ -47,6 +47,9 @@ class DrumPicker extends StatefulWidget {
     required this.lastDate,
     this.currentDate,
     this.selectableDayPredicate,
+    this.disabledWeekdays,
+    this.holidays,
+    this.firstDayOfWeek,
     this.initialMode = DrumPickerMode.drum,
     this.showModeToggle = true,
     this.columnOrder,
@@ -81,7 +84,12 @@ class DrumPicker extends StatefulWidget {
   })  : assert(!firstDate.isAfter(lastDate),
             'firstDate must be on or before lastDate'),
         assert(
-            60 % minuteInterval == 0, 'minuteInterval must be a divisor of 60');
+            60 % minuteInterval == 0, 'minuteInterval must be a divisor of 60'),
+        assert(
+            firstDayOfWeek == null ||
+                (firstDayOfWeek >= DateTime.monday &&
+                    firstDayOfWeek <= DateTime.sunday),
+            'firstDayOfWeek must be 1 (Monday) to 7 (Sunday)');
 
   /// The date initially selected when the picker opens.
   ///
@@ -100,7 +108,30 @@ class DrumPicker extends StatefulWidget {
   final DateTime? currentDate;
 
   /// A function that returns true if the given date may be selected.
+  ///
+  /// Combined (logically anded) with [disabledWeekdays] and [holidays]: a day
+  /// is selectable only when it passes all three.
   final SelectableDayPredicate? selectableDayPredicate;
+
+  /// Weekdays that cannot be selected, in every mode, using the
+  /// `DateTime.weekday` convention (`DateTime.monday` == 1 to
+  /// `DateTime.sunday` == 7).
+  ///
+  /// For a working days only picker, pass the weekend:
+  /// `{DateTime.saturday, DateTime.sunday}` (or `{DateTime.friday,
+  /// DateTime.saturday}` in much of the Middle East). Null disables nothing.
+  final Set<int>? disabledWeekdays;
+
+  /// Specific dates that cannot be selected (for example public holidays),
+  /// compared by calendar day and ignoring any time component. Null disables
+  /// nothing.
+  final Set<DateTime>? holidays;
+
+  /// The first day of the week in calendar mode, using the `DateTime.weekday`
+  /// convention (`DateTime.monday` == 1 to `DateTime.sunday` == 7).
+  ///
+  /// When null, the locale's default (from `MaterialLocalizations`) is used.
+  final int? firstDayOfWeek;
 
   /// The input mode shown when the picker first opens.
   final DrumPickerMode initialMode;
@@ -234,6 +265,7 @@ class _DrumPickerState extends State<DrumPicker> {
   late final DrumCalendarSystem _system;
   late final DateTime _first;
   late final DateTime _last;
+  late final Set<DateTime> _holidays;
 
   DateTime get _currentDate =>
       DrumDateUtils.dateOnly(widget.currentDate ?? DateTime.now());
@@ -264,8 +296,16 @@ class _DrumPickerState extends State<DrumPicker> {
     _first = lo.isBefore(sysLo) ? sysLo : lo;
     _last = hi.isAfter(sysHi) ? sysHi : hi;
 
+    _holidays = {
+      for (final h in widget.holidays ?? const <DateTime>{})
+        DrumDateUtils.dateOnly(h),
+    };
+
     final initial = widget.initialDate ?? widget.currentDate ?? DateTime.now();
-    final clampedDate = DrumDateUtils.clamp(initial, _first, _last);
+    // Snap the opening date to the nearest selectable day, so a default that
+    // lands on a weekend or holiday does not start on a disabled day.
+    final clampedDate =
+        _nearestSelectable(DrumDateUtils.clamp(initial, _first, _last));
     if (widget.pickTime) {
       _selectedDate = DrumDateUtils.combine(
         clampedDate,
@@ -275,6 +315,36 @@ class _DrumPickerState extends State<DrumPicker> {
     } else {
       _selectedDate = clampedDate;
     }
+  }
+
+  /// Whether [day] passes the disabled weekdays, holidays, and the caller's
+  /// [DrumPicker.selectableDayPredicate] (all must hold).
+  bool _isSelectableDay(DateTime day) {
+    final d = DrumDateUtils.dateOnly(day);
+    if (widget.disabledWeekdays?.contains(d.weekday) ?? false) return false;
+    if (_holidays.contains(d)) return false;
+    return widget.selectableDayPredicate?.call(day) ?? true;
+  }
+
+  /// Returns [from] if it is in range and selectable, otherwise the closest
+  /// in range selectable day, searching outward up to a year. Falls back to
+  /// [from] if none is found.
+  DateTime _nearestSelectable(DateTime from) {
+    final start = DrumDateUtils.dateOnly(from);
+    if (DrumDateUtils.isInRange(start, _first, _last) &&
+        _isSelectableDay(start)) {
+      return start;
+    }
+    for (var delta = 1; delta <= 366; delta++) {
+      for (final dir in const [1, -1]) {
+        final candidate = start.add(Duration(days: delta * dir));
+        if (DrumDateUtils.isInRange(candidate, _first, _last) &&
+            _isSelectableDay(candidate)) {
+          return candidate;
+        }
+      }
+    }
+    return start;
   }
 
   Locale? _effectiveLocale(BuildContext context) =>
@@ -333,7 +403,7 @@ class _DrumPickerState extends State<DrumPicker> {
 
   bool _isQuickSelectEnabled(DrumQuickSelect chip) {
     return DrumDateUtils.isInRange(chip.date, _first, _last) &&
-        (widget.selectableDayPredicate?.call(chip.date) ?? true);
+        _isSelectableDay(chip.date);
   }
 
   /// The calendar and locale aware headline for the selected date.
@@ -435,7 +505,7 @@ class _DrumPickerState extends State<DrumPicker> {
           locale: locale,
           labels: widget.labels,
           monthFormat: widget.monthFormat,
-          selectableDayPredicate: widget.selectableDayPredicate,
+          selectableDayPredicate: _isSelectableDay,
           onChanged: _onDateChanged,
         );
       case DrumPickerMode.calendar:
@@ -447,7 +517,8 @@ class _DrumPickerState extends State<DrumPicker> {
           system: _system,
           locale: locale,
           tokens: tokens,
-          selectableDayPredicate: widget.selectableDayPredicate,
+          firstDayOfWeek: widget.firstDayOfWeek,
+          selectableDayPredicate: _isSelectableDay,
           onChanged: _onDateChanged,
         );
       case DrumPickerMode.input:
@@ -458,7 +529,7 @@ class _DrumPickerState extends State<DrumPicker> {
           system: _system,
           locale: locale,
           format: widget.inputFormat,
-          selectableDayPredicate: widget.selectableDayPredicate,
+          selectableDayPredicate: _isSelectableDay,
           errorFormatText: widget.errorFormatText,
           errorInvalidText: widget.errorInvalidText,
           fieldHintText: widget.fieldHintText,

@@ -22,6 +22,7 @@ class CalendarModeWidget extends StatefulWidget {
     required this.locale,
     required this.tokens,
     required this.onChanged,
+    this.firstDayOfWeek,
     this.selectableDayPredicate,
   });
 
@@ -45,6 +46,10 @@ class CalendarModeWidget extends StatefulWidget {
 
   /// Resolved visual tokens.
   final DrumPickerResolved tokens;
+
+  /// Overrides the first day of the week (`DateTime.monday` == 1 to
+  /// `DateTime.sunday` == 7). Null uses the locale default.
+  final int? firstDayOfWeek;
 
   /// Called with the new date when a day is tapped.
   final ValueChanged<DateTime> onChanged;
@@ -237,9 +242,16 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
     );
   }
 
+  /// The 0 based (0 == Sunday .. 6 == Saturday) index of the first weekday,
+  /// from the [CalendarModeWidget.firstDayOfWeek] override or the locale.
+  int _firstDayIndex(MaterialLocalizations localizations) =>
+      widget.firstDayOfWeek != null
+          ? widget.firstDayOfWeek! % 7
+          : localizations.firstDayOfWeekIndex;
+
   Widget _buildWeekdayRow(BuildContext context) {
     final localizations = MaterialLocalizations.of(context);
-    final firstDay = localizations.firstDayOfWeekIndex;
+    final firstDay = _firstDayIndex(localizations);
     final narrow = localizations.narrowWeekdays;
     return Row(
       children: [
@@ -258,7 +270,7 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
 
   Widget _buildDayGrid(BuildContext context) {
     final localizations = MaterialLocalizations.of(context);
-    final firstDayOfWeek = localizations.firstDayOfWeekIndex;
+    final firstDayOfWeek = _firstDayIndex(localizations);
     final daysInMonth = widget.system.daysInMonth(_year, _month);
 
     // weekday: Mon=1..Sun=7; convert to 0-based from firstDayOfWeek.

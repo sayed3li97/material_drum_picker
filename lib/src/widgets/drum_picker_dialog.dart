@@ -34,6 +34,9 @@ Future<DateTime?> showDrumDatePicker({
   DateTime? initialDate,
   DateTime? currentDate,
   SelectableDayPredicate? selectableDayPredicate,
+  Set<int>? disabledWeekdays,
+  Set<DateTime>? holidays,
+  int? firstDayOfWeek,
   DrumPickerMode initialMode = DrumPickerMode.drum,
   bool showModeToggle = true,
   DrumColumnOrder? columnOrder,
@@ -78,6 +81,9 @@ Future<DateTime?> showDrumDatePicker({
     lastDate: lastDate,
     currentDate: currentDate,
     selectableDayPredicate: selectableDayPredicate,
+    disabledWeekdays: disabledWeekdays,
+    holidays: holidays,
+    firstDayOfWeek: firstDayOfWeek,
     initialMode: initialMode,
     showModeToggle: showModeToggle,
     columnOrder: columnOrder,
@@ -142,6 +148,9 @@ class _DrumPickerDialog extends StatelessWidget {
     this.initialDate,
     this.currentDate,
     this.selectableDayPredicate,
+    this.disabledWeekdays,
+    this.holidays,
+    this.firstDayOfWeek,
     required this.initialMode,
     required this.showModeToggle,
     this.columnOrder,
@@ -175,6 +184,9 @@ class _DrumPickerDialog extends StatelessWidget {
   final DateTime lastDate;
   final DateTime? currentDate;
   final SelectableDayPredicate? selectableDayPredicate;
+  final Set<int>? disabledWeekdays;
+  final Set<DateTime>? holidays;
+  final int? firstDayOfWeek;
   final DrumPickerMode initialMode;
   final bool showModeToggle;
   final DrumColumnOrder? columnOrder;
@@ -216,6 +228,9 @@ class _DrumPickerDialog extends StatelessWidget {
             lastDate: lastDate,
             currentDate: currentDate,
             selectableDayPredicate: selectableDayPredicate,
+            disabledWeekdays: disabledWeekdays,
+            holidays: holidays,
+            firstDayOfWeek: firstDayOfWeek,
             initialMode: initialMode,
             showModeToggle: showModeToggle,
             columnOrder: columnOrder,

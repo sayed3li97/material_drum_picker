@@ -18,19 +18,15 @@ class _BookingScreenState extends State<BookingScreen> {
     DateTime(2025, 1, 1),
   };
 
-  bool _isSelectable(DateTime day) {
-    if (day.weekday == DateTime.saturday || day.weekday == DateTime.sunday) {
-      return false;
-    }
-    return !_holidays.any((h) => DrumDateUtils.isSameDay(h, day));
-  }
-
   Future<void> _pick() async {
     final picked = await showDrumDatePicker(
       context: context,
       firstDate: DateTime.now(),
       lastDate: DateTime(2025, 12, 31),
-      selectableDayPredicate: _isSelectable,
+      // Working days only, with public holidays blocked and a Monday start.
+      disabledWeekdays: const {DateTime.saturday, DateTime.sunday},
+      holidays: _holidays,
+      firstDayOfWeek: DateTime.monday,
       initialMode: DrumPickerMode.calendar,
       helpText: 'CHOOSE A WORKDAY',
     );
