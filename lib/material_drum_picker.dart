@@ -26,6 +26,11 @@ export 'src/calendar/tabular_lunar_calendar_system.dart'
 // Theme
 export 'src/theme/drum_picker_theme.dart';
 
+// Drop in replacements for the Flutter and Cupertino pickers
+export 'src/compat/drum_calendar_date_picker.dart' show DrumCalendarDatePicker;
+export 'src/compat/drum_cupertino_date_picker.dart'
+    show DrumCupertinoDatePicker;
+
 // Utils (public helpers used in examples and predicates)
 export 'src/utils/drum_date_utils.dart' show DrumDateUtils;
 
