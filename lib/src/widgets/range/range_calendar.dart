@@ -8,29 +8,31 @@ import '../../utils/drum_locale_utils.dart';
 import '../../utils/drum_numerals.dart';
 import '../internal/day_cell.dart';
 
-/// A calendar grid that selects a contiguous range, or a set of individual
-/// days, in the active [system] calendar.
+/// A controlled calendar grid for range or multi selection in the active
+/// [system] calendar. It owns only the displayed month; the selection is held
+/// by the parent and reported through [onDaySelected].
 ///
 /// Exposed (non-private) for widget tests. Not part of the public package API;
 /// the public surface is `DrumDateRangePicker`, `DrumMultiDatePicker`,
 /// `showDrumDateRangePicker`, and `showDrumMultiDatePicker`.
 class RangeCalendar extends StatefulWidget {
-  /// Creates a range or multi selection calendar.
+  /// Creates a controlled range or multi selection grid.
   const RangeCalendar({
     super.key,
     required this.firstDate,
     required this.lastDate,
     required this.currentDate,
+    required this.displayAnchor,
     required this.system,
     required this.locale,
     required this.tokens,
     required this.multiSelect,
+    required this.onDaySelected,
     this.firstDayOfWeek,
     this.selectableDayPredicate,
-    this.initialRange,
-    this.initialDates,
-    this.onRangeChanged,
-    this.onDatesChanged,
+    this.rangeStart,
+    this.rangeEnd,
+    this.selectedDates = const {},
   });
 
   /// The earliest selectable date.
@@ -42,6 +44,9 @@ class RangeCalendar extends StatefulWidget {
   /// The date marked as today.
   final DateTime currentDate;
 
+  /// The month to display initially.
+  final DateTime displayAnchor;
+
   /// The active calendar system.
   final DrumCalendarSystem system;
 
@@ -51,8 +56,11 @@ class RangeCalendar extends StatefulWidget {
   /// Resolved visual tokens.
   final DrumPickerResolved tokens;
 
-  /// Whether to select a set of days (true) or a contiguous range (false).
+  /// Whether this is a multi selection grid (true) or a range grid (false).
   final bool multiSelect;
+
+  /// Called with a selectable day when it is tapped.
+  final ValueChanged<DateTime> onDaySelected;
 
   /// First weekday override (`DateTime.monday` to `DateTime.sunday`).
   final int? firstDayOfWeek;
@@ -60,18 +68,14 @@ class RangeCalendar extends StatefulWidget {
   /// A predicate restricting selectable days.
   final bool Function(DateTime day)? selectableDayPredicate;
 
-  /// The initially selected range, in range mode.
-  final DateTimeRange? initialRange;
+  /// The current range start (range mode).
+  final DateTime? rangeStart;
 
-  /// The initially selected days, in multi mode.
-  final List<DateTime>? initialDates;
+  /// The current range end (range mode).
+  final DateTime? rangeEnd;
 
-  /// Called with the current start and end as the range is built (either may
-  /// be null while the range is incomplete).
-  final void Function(DateTime? start, DateTime? end)? onRangeChanged;
-
-  /// Called with the selected days (sorted) in multi mode.
-  final ValueChanged<List<DateTime>>? onDatesChanged;
+  /// The current set of selected days (multi mode).
+  final Set<DateTime> selectedDates;
 
   @override
   State<RangeCalendar> createState() => _RangeCalendarState();
@@ -80,28 +84,14 @@ class RangeCalendar extends StatefulWidget {
 class _RangeCalendarState extends State<RangeCalendar> {
   late int _year;
   late int _month;
-  DateTime? _start;
-  DateTime? _end;
-  final Set<DateTime> _selected = {};
 
   String? get _localeName => DrumLocaleUtils.toIntlLocale(widget.locale);
 
   @override
   void initState() {
     super.initState();
-    if (widget.multiSelect) {
-      _selected.addAll(
-          (widget.initialDates ?? const []).map(DrumDateUtils.dateOnly));
-    } else if (widget.initialRange != null) {
-      _start = DrumDateUtils.dateOnly(widget.initialRange!.start);
-      _end = DrumDateUtils.dateOnly(widget.initialRange!.end);
-    }
-    final anchor = _start ??
-        (_selected.isEmpty
-            ? DrumDateUtils.dateOnly(widget.currentDate)
-            : _selected.reduce((a, b) => a.isBefore(b) ? a : b));
-    final clamped =
-        DrumDateUtils.clamp(anchor, widget.firstDate, widget.lastDate);
+    final clamped = DrumDateUtils.clamp(
+        widget.displayAnchor, widget.firstDate, widget.lastDate);
     final c = widget.system.decode(clamped);
     _year = c.year;
     _month = c.month;
@@ -155,36 +145,20 @@ class _RangeCalendarState extends State<RangeCalendar> {
     });
   }
 
-  void _onTap(DateTime date) {
-    if (!_isSelectable(date)) return;
-    setState(() {
-      if (widget.multiSelect) {
-        if (!_selected.remove(date)) _selected.add(date);
-        final sorted = _selected.toList()..sort();
-        widget.onDatesChanged?.call(sorted);
-      } else {
-        if (_start == null || _end != null) {
-          _start = date;
-          _end = null;
-        } else if (date.isBefore(_start!)) {
-          _start = date;
-        } else {
-          _end = date;
-        }
-        widget.onRangeChanged?.call(_start, _end);
-      }
-    });
-  }
-
   bool _dayIsSelected(DateTime date) {
-    if (widget.multiSelect) return _selected.contains(date);
-    return DrumDateUtils.isSameDay(date, _start) ||
-        DrumDateUtils.isSameDay(date, _end);
+    if (widget.multiSelect) return widget.selectedDates.contains(date);
+    return DrumDateUtils.isSameDay(date, widget.rangeStart) ||
+        DrumDateUtils.isSameDay(date, widget.rangeEnd);
   }
 
   bool _dayInRange(DateTime date) {
-    if (widget.multiSelect || _start == null || _end == null) return false;
-    return !date.isBefore(_start!) && !date.isAfter(_end!);
+    if (widget.multiSelect ||
+        widget.rangeStart == null ||
+        widget.rangeEnd == null) {
+      return false;
+    }
+    return !date.isBefore(widget.rangeStart!) &&
+        !date.isAfter(widget.rangeEnd!);
   }
 
   int _firstDayIndex(MaterialLocalizations l) => widget.firstDayOfWeek != null
@@ -261,15 +235,16 @@ class _RangeCalendarState extends State<RangeCalendar> {
     }
     for (var day = 1; day <= daysInMonth; day++) {
       final date = widget.system.encode(_year, _month, day);
+      final enabled = _isSelectable(date);
       cells.add(DayCell(
         day: day,
         label: DrumNumerals.format(day, _localeName),
-        isEnabled: _isSelectable(date),
+        isEnabled: enabled,
         isSelected: _dayIsSelected(date),
         isInRange: _dayInRange(date),
         isToday: DrumDateUtils.isSameDay(date, widget.currentDate),
         tokens: widget.tokens,
-        onTap: () => _onTap(date),
+        onTap: () => widget.onDaySelected(date),
       ));
     }
 

@@ -75,6 +75,57 @@ void main() {
     });
   });
 
+  group('DrumDateRangePicker drum mode and toggle', () {
+    testWidgets('drum mode shows Start and End wheels', (tester) async {
+      await tester.pumpWidget(buildTestWidget(
+        DrumDateRangePicker(
+          firstDate: DateTime(2024, 6, 1),
+          lastDate: DateTime(2024, 6, 30),
+          currentDate: june,
+          initialMode: DrumRangeMode.drum,
+          showModeToggle: false,
+          onChanged: (_) {},
+        ),
+        locale: const Locale('en'),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('Start'), findsOneWidget);
+      expect(find.text('End'), findsOneWidget);
+      // Two day/month/year wheel groups are present.
+      expect(find.text('DAY'), findsNWidgets(2));
+      expect(find.text('Calendar'), findsNothing); // toggle hidden
+    });
+
+    testWidgets('toggling to Drum yields a range and back to Calendar',
+        (tester) async {
+      DateTimeRange? range;
+      await tester.pumpWidget(buildTestWidget(
+        DrumDateRangePicker(
+          firstDate: DateTime(2024, 6, 1),
+          lastDate: DateTime(2024, 6, 30),
+          currentDate: june, // 2024-06-15
+          onChanged: (r) => range = r,
+        ),
+        locale: const Locale('en'),
+      ));
+      await tester.pumpAndSettle();
+      // Starts on the calendar grid.
+      expect(find.text('Start'), findsNothing);
+      await tester.tap(find.text('Drum'));
+      await tester.pumpAndSettle();
+      expect(find.text('Start'), findsOneWidget);
+      // Drum mode always has both ends, so a range is reported immediately.
+      expect(range, isNotNull);
+      expect(range!.start, DateTime(2024, 6, 15));
+      expect(range!.end, DateTime(2024, 6, 15));
+      // Back to the grid.
+      await tester.tap(find.text('Calendar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Start'), findsNothing);
+      expect(find.text('15'), findsOneWidget); // a day cell
+    });
+  });
+
   group('DrumMultiDatePicker (inline)', () {
     testWidgets('tapping toggles days in and out of the set', (tester) async {
       List<DateTime> dates = const [];
@@ -106,6 +157,9 @@ void main() {
 
   group('showDrumDateRangePicker (modal)', () {
     testWidgets('returns the selected range on Save', (tester) async {
+      tester.view.physicalSize = const Size(800, 1000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
       DateTimeRange? result;
       await tester.pumpWidget(MaterialApp(
         home: Builder(

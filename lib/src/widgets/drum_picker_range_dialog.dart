@@ -3,7 +3,9 @@ import 'package:intl/intl.dart' show DateFormat;
 
 import '../calendar/drum_calendar_system.dart';
 import '../models/drum_calendar_type.dart';
+import '../models/drum_range_mode.dart';
 import '../theme/drum_picker_theme.dart';
+import '../utils/drum_date_utils.dart';
 import '../utils/drum_locale_utils.dart';
 import 'internal/picker_header.dart';
 import 'range/drum_range_pickers.dart';
@@ -12,13 +14,14 @@ import 'range/range_calendar.dart';
 /// Shows a modal that selects a contiguous date range, a drop in style
 /// replacement for Flutter's `showDateRangePicker`.
 ///
-/// Tap a start day, then an end day, then confirm. Returns the selected
-/// [DateTimeRange], or null if the user cancels.
+/// The user can pick on a calendar grid or two drum rollers, switching between
+/// them with the mode toggle (set [showModeToggle] to false and [initialMode]
+/// to lock one). Returns the selected [DateTimeRange], or null if cancelled.
 ///
-/// Beyond the standard range UI it accepts this package's extras:
-/// alternative [calendar]s, working day and holiday rules
-/// ([disabledWeekdays], [holidays]), a custom [firstDayOfWeek], a
-/// [selectableDayPredicate], and per instance [theme] overrides.
+/// Beyond the standard range UI it accepts this package's extras: alternative
+/// [calendar]s, working day and holiday rules ([disabledWeekdays],
+/// [holidays]), a custom [firstDayOfWeek], a [selectableDayPredicate], and per
+/// instance [theme] overrides.
 ///
 /// ```dart
 /// final range = await showDrumDateRangePicker(
@@ -33,6 +36,8 @@ Future<DateTimeRange?> showDrumDateRangePicker({
   required DateTime lastDate,
   DateTimeRange? initialDateRange,
   DateTime? currentDate,
+  DrumRangeMode initialMode = DrumRangeMode.calendar,
+  bool showModeToggle = true,
   SelectableDayPredicate? selectableDayPredicate,
   DrumCalendarType calendar = DrumCalendarType.gregorian,
   DrumCalendarSystem? calendarSystem,
@@ -60,6 +65,8 @@ Future<DateTimeRange?> showDrumDateRangePicker({
     lastDate: lastDate,
     initialDateRange: initialDateRange,
     currentDate: currentDate,
+    initialMode: initialMode,
+    showModeToggle: showModeToggle,
     selectableDayPredicate: selectableDayPredicate,
     calendar: calendar,
     calendarSystem: calendarSystem,
@@ -167,6 +174,8 @@ class _RangeDialog extends StatefulWidget {
     required this.lastDate,
     this.initialDateRange,
     this.currentDate,
+    required this.initialMode,
+    required this.showModeToggle,
     this.selectableDayPredicate,
     required this.calendar,
     this.calendarSystem,
@@ -184,6 +193,8 @@ class _RangeDialog extends StatefulWidget {
   final DateTime lastDate;
   final DateTimeRange? initialDateRange;
   final DateTime? currentDate;
+  final DrumRangeMode initialMode;
+  final bool showModeToggle;
   final SelectableDayPredicate? selectableDayPredicate;
   final DrumCalendarType calendar;
   final DrumCalendarSystem? calendarSystem;
@@ -228,19 +239,18 @@ class _RangeDialogState extends State<_RangeDialog> {
     );
     final localeName = DrumLocaleUtils.toIntlLocale(config.locale);
     final fmt = DateFormat.MMMd(localeName);
+    final arrow = String.fromCharCode(0x2192);
     final headline = _start == null
-        ? '${MaterialLocalizations.of(context).dateRangeStartLabel} '
-            '${MaterialLocalizations.of(context).unspecifiedDateRange}'
+        ? 'Select a start date'
         : _end == null
-            ? '${fmt.format(_start!)} ${String.fromCharCode(0x2192)} ...'
-            : '${fmt.format(_start!)} ${String.fromCharCode(0x2192)} '
-                '${fmt.format(_end!)}';
+            ? '${fmt.format(_start!)} $arrow ...'
+            : '${fmt.format(_start!)} $arrow ${fmt.format(_end!)}';
 
     return Dialog(
       clipBehavior: Clip.antiAlias,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 380, maxHeight: 560),
+        constraints: const BoxConstraints(maxWidth: 380, maxHeight: 660),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -250,18 +260,13 @@ class _RangeDialogState extends State<_RangeDialog> {
                 headline: headline,
                 tokens: config.tokens,
               ),
-              RangeCalendar(
-                firstDate: config.first,
-                lastDate: config.last,
-                currentDate: config.current,
-                system: config.system,
-                locale: config.locale,
-                tokens: config.tokens,
-                multiSelect: false,
+              RangeBody(
+                config: config,
+                initialDateRange: widget.initialDateRange,
+                initialMode: widget.initialMode,
+                showModeToggle: widget.showModeToggle,
                 firstDayOfWeek: widget.firstDayOfWeek,
-                selectableDayPredicate: config.isSelectable,
-                initialRange: widget.initialDateRange,
-                onRangeChanged: (start, end) => setState(() {
+                onChanged: (start, end) => setState(() {
                   _start = start;
                   _end = end;
                 }),
@@ -324,7 +329,14 @@ class _MultiDialog extends StatefulWidget {
 }
 
 class _MultiDialogState extends State<_MultiDialog> {
-  late List<DateTime> _dates = List.of(widget.initialDates ?? const []);
+  final Set<DateTime> _selected = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _selected
+        .addAll((widget.initialDates ?? const []).map(DrumDateUtils.dateOnly));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -341,8 +353,11 @@ class _MultiDialogState extends State<_MultiDialog> {
       locale: widget.locale,
       theme: widget.theme,
     );
-    final count = _dates.length;
-    final headline = count == 0 ? 'None selected' : '$count selected';
+    final headline =
+        _selected.isEmpty ? 'None selected' : '${_selected.length} selected';
+    final anchor = _selected.isEmpty
+        ? config.current
+        : _selected.reduce((a, b) => a.isBefore(b) ? a : b);
 
     return Dialog(
       clipBehavior: Clip.antiAlias,
@@ -362,21 +377,28 @@ class _MultiDialogState extends State<_MultiDialog> {
                 firstDate: config.first,
                 lastDate: config.last,
                 currentDate: config.current,
+                displayAnchor: anchor,
                 system: config.system,
                 locale: config.locale,
                 tokens: config.tokens,
                 multiSelect: true,
                 firstDayOfWeek: widget.firstDayOfWeek,
                 selectableDayPredicate: config.isSelectable,
-                initialDates: widget.initialDates,
-                onDatesChanged: (dates) => setState(() => _dates = dates),
+                selectedDates: _selected,
+                onDaySelected: (date) {
+                  if (!config.isSelectable(date)) return;
+                  setState(() {
+                    if (!_selected.remove(date)) _selected.add(date);
+                  });
+                },
               ),
               _actions(
                 context,
                 cancelText: widget.cancelText,
                 saveText: widget.saveText,
-                onSave: () =>
-                    Navigator.of(context).pop(List<DateTime>.of(_dates)),
+                onSave: () => Navigator.of(context).pop(
+                  _selected.toList()..sort(),
+                ),
               ),
             ],
           ),

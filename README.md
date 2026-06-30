@@ -553,10 +553,26 @@ way the Gregorian calendar does.
 ## Date range and multiple dates
 
 Pick a contiguous **range** or any **set of individual days**, with the same
-Material 3 calendar grid and the same rules as the single picker (calendars,
-working days, holidays, first day of week, theming).
+rules as the single picker (calendars, working days, holidays, first day of
+week, theming). The range picker offers **two presentations the user can switch
+between** with a toggle: a Material 3 **calendar grid** and a **two-wheel drum**
+(a Start roller and an End roller).
 
-![a date range with highlighted days, and multiple selected days](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/range.png)
+![date range as a calendar or a drum, and multiple selected days](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/range.png)
+
+Use `initialMode` (`DrumRangeMode.calendar` or `.drum`) to choose the first
+view, and `showModeToggle` to let the end user switch (default `true`); set it
+to `false` to lock one presentation:
+
+```dart
+DrumDateRangePicker(
+  firstDate: DateTime(2024, 1, 1),
+  lastDate: DateTime(2024, 12, 31),
+  initialMode: DrumRangeMode.drum, // open on the two-wheel drum
+  showModeToggle: true,            // ... but let the user switch to the grid
+  onChanged: (range) => setState(() => _range = range),
+);
+```
 
 ### As a dialog
 

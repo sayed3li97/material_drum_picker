@@ -22,6 +22,12 @@ const _robotoMedium =
 const _materialIcons =
     '/tmp/flutter/engine/src/flutter/tools/font_subset/fixtures/MaterialIcons-Regular.ttf';
 
+final DateTime _today = DateTime(2024, 6, 13);
+final _range = DateTimeRange(
+  start: DateTime(2024, 6, 10),
+  end: DateTime(2024, 6, 18),
+);
+
 Future<ByteData> _load(String path) async =>
     ByteData.view(Uint8List.fromList(await File(path).readAsBytes()).buffer);
 
@@ -36,7 +42,7 @@ void main() {
       await icons.load();
     });
 
-    tester.view.physicalSize = const Size(820, 520);
+    tester.view.physicalSize = const Size(1180, 800);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
@@ -85,12 +91,12 @@ class _RangeShowcase extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Date range and multiple date selection',
+              const Text('Date range (calendar or drum) and multiple dates',
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
               const SizedBox(height: 2),
               Text(
-                'A contiguous range with highlighted in-between days, or any '
-                'set of individual days',
+                'The range picker offers a calendar grid and a two-wheel drum, '
+                'switchable with the toggle. Multiple dates pick any set of days.',
                 style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
               ),
               const SizedBox(height: 16),
@@ -99,25 +105,34 @@ class _RangeShowcase extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _panel(
-                    'DrumDateRangePicker',
+                    'Range, calendar',
                     DrumDateRangePicker(
                       firstDate: DateTime(2024, 6, 1),
                       lastDate: DateTime(2024, 6, 30),
-                      currentDate: DateTime(2024, 6, 13),
-                      initialDateRange: DateTimeRange(
-                        start: DateTime(2024, 6, 10),
-                        end: DateTime(2024, 6, 18),
-                      ),
+                      currentDate: _today,
+                      initialDateRange: _range,
                       onChanged: (_) {},
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   _panel(
-                    'DrumMultiDatePicker',
+                    'Range, drum',
+                    DrumDateRangePicker(
+                      firstDate: DateTime(2020, 1, 1),
+                      lastDate: DateTime(2030, 12, 31),
+                      currentDate: _today,
+                      initialDateRange: _range,
+                      initialMode: DrumRangeMode.drum,
+                      onChanged: (_) {},
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  _panel(
+                    'Multiple dates',
                     DrumMultiDatePicker(
                       firstDate: DateTime(2024, 6, 1),
                       lastDate: DateTime(2024, 6, 30),
-                      currentDate: DateTime(2024, 6, 13),
+                      currentDate: _today,
                       initialDates: [
                         DateTime(2024, 6, 4),
                         DateTime(2024, 6, 11),
@@ -137,7 +152,7 @@ class _RangeShowcase extends StatelessWidget {
   }
 
   Widget _panel(String label, Widget child) => SizedBox(
-        width: 360,
+        width: 356,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
