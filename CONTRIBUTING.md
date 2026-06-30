@@ -85,10 +85,16 @@ Releases are automated. To ship a new version:
 1. Update the version in `pubspec.yaml` and add a `CHANGELOG.md` entry.
 2. Merge to `main`.
 
-On merge, the `Release on merge to main` workflow checks pub.dev and, when the
-version is new, tags it `vX.Y.Z`. That tag triggers `Publish to pub.dev`, which
-publishes through pub.dev automated publishing (OIDC). Merging without a version
-bump is a safe no-op.
+On merge, the `Release on merge to main` workflow reads the version and, when no
+release exists for it yet, **creates a GitHub Release `vX.Y.Z`** whose notes are
+that version's `CHANGELOG.md` section. The GitHub Release is created with the
+built in token, so it needs no secret. Merging without a version bump is a safe
+no-op (the release already exists).
+
+Publishing to pub.dev is the optional second half, gated on the setup below.
+When `RELEASE_PAT` is present the workflow pushes the tag with it so
+`Publish to pub.dev` runs; without it, the GitHub Release is still created and
+you publish to pub.dev separately.
 
 pub.dev one-time setup (required for any automated publish):
 

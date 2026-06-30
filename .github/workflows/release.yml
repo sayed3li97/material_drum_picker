@@ -1,26 +1,20 @@
 name: Release on merge to main
 
-# When a pull request is merged into main, this workflow reads the version from
-# pubspec.yaml and, if that version is not yet on pub.dev, tags it as vX.Y.Z.
-# Pushing the tag triggers the "Publish to pub.dev" workflow, which performs the
-# actual publish via pub.dev automated publishing (OIDC).
+# On every push to main this reads the version from pubspec.yaml and, if no
+# release exists for it yet, creates a GitHub Release tagged vX.Y.Z whose notes
+# are the matching section of CHANGELOG.md. So each merge that bumps the version
+# publishes a new, incrementing GitHub Release automatically.
 #
-# Setup for full automation:
-#   1. pub.dev: package Admin tab, enable automated publishing from GitHub
-#      Actions, repository sayed3li97/material_drum_picker, tag pattern
-#      v{{version}}.
-#   2. GitHub: add a repository secret named RELEASE_PAT, a fine-grained
-#      personal access token with "Contents: read and write" on this repo. The
-#      default GITHUB_TOKEN cannot be used here because tags it pushes do not
-#      trigger the publish workflow.
+# The tag and release are created with the built in GITHUB_TOKEN, so no secret
+# is required for the GitHub Release itself. A merge that does not change the
+# version is a safe no-op (the release for that version already exists).
 #
-# If RELEASE_PAT is not set this workflow does not fail. It logs a warning and
-# skips tagging, so you can still publish by creating a GitHub Release with tag
-# vX.Y.Z (the publish workflow also triggers on a published release, which needs
-# no secret).
-#
-# To cut a release: bump `version` in pubspec.yaml, update CHANGELOG.md, and
-# merge to main. Re-running with an already published version is a safe no-op.
+# Publishing to pub.dev (optional): if a RELEASE_PAT secret is present (a fine
+# grained personal access token with Contents: read and write), the tag is
+# pushed with it first so the "Publish to pub.dev" workflow triggers (the
+# default GITHUB_TOKEN cannot trigger another workflow). Without the secret the
+# GitHub Release is still created; publish to pub.dev by hand, or add the
+# secret. One time pub.dev setup is in CONTRIBUTING.md.
 
 on:
   push:
@@ -30,47 +24,68 @@ permissions:
   contents: write
 
 jobs:
-  tag-release:
+  release:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Decide whether to release
-        id: decide
+      - name: Resolve version
+        id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           version=$(grep '^version:' pubspec.yaml | head -1 \
             | sed 's/version:[[:space:]]*//' | tr -d '[:space:]')
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "Resolved version: $version"
 
-          code=$(curl -s -o /dev/null -w '%{http_code}' \
-            "https://pub.dev/api/packages/material_drum_picker/versions/$version")
-          if [ "$code" = "200" ]; then
-            echo "Version $version is already on pub.dev. Nothing to do."
-            echo "release=false" >> "$GITHUB_OUTPUT"
-          elif git rev-parse "v$version" >/dev/null 2>&1; then
-            echo "Tag v$version already exists. Nothing to do."
+          if git rev-parse "v$version" >/dev/null 2>&1 \
+            || gh release view "v$version" >/dev/null 2>&1; then
+            echo "v$version is already released. Nothing to do."
             echo "release=false" >> "$GITHUB_OUTPUT"
           else
             echo "release=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Create and push tag
-        if: steps.decide.outputs.release == 'true'
+      - name: Extract release notes from CHANGELOG
+        if: steps.v.outputs.release == 'true'
+        run: |
+          version="${{ steps.v.outputs.version }}"
+          awk -v ver="$version" '
+            $0 == "## " ver { flag = 1; next }
+            flag && /^## / { exit }
+            flag { print }
+          ' CHANGELOG.md > RELEASE_NOTES.md
+          # Trim leading/trailing blank lines; fall back to a default note.
+          if ! grep -q '[^[:space:]]' RELEASE_NOTES.md; then
+            printf 'Release v%s\n' "$version" > RELEASE_NOTES.md
+          fi
+          echo '---- release notes ----'
+          cat RELEASE_NOTES.md
+
+      - name: Create the GitHub Release
+        if: steps.v.outputs.release == 'true'
         env:
+          GH_TOKEN: ${{ github.token }}
           RELEASE_PAT: ${{ secrets.RELEASE_PAT }}
         run: |
-          if [ -z "$RELEASE_PAT" ]; then
-            echo "::warning::RELEASE_PAT secret is not set, so this version was not tagged automatically. To publish v${{ steps.decide.outputs.version }}, either add a fine-grained PAT with Contents:write (full automation), or publish a GitHub Release with tag v${{ steps.decide.outputs.version }} (Releases, Draft a new release), which triggers the publish workflow without any secret."
-            exit 0
+          tag="v${{ steps.v.outputs.version }}"
+          if [ -n "$RELEASE_PAT" ]; then
+            # Push the tag with the PAT so the Publish to pub.dev workflow runs,
+            # then attach the release to that tag.
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag -a "$tag" -m "Release $tag"
+            git push \
+              "https://x-access-token:${RELEASE_PAT}@github.com/${{ github.repository }}.git" \
+              "$tag"
+            gh release create "$tag" --title "$tag" --notes-file RELEASE_NOTES.md
+            echo "Created release $tag and pushed the tag (publish workflow will run)."
+          else
+            echo "::notice::RELEASE_PAT is not set. Creating the GitHub Release with GITHUB_TOKEN; Publish to pub.dev will not auto-trigger for this release."
+            gh release create "$tag" --title "$tag" \
+              --notes-file RELEASE_NOTES.md --target main
+            echo "Created release $tag on main."
           fi
-          tag="v${{ steps.decide.outputs.version }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "$tag" -m "Release $tag"
-          git remote set-url origin \
-            "https://x-access-token:${RELEASE_PAT}@github.com/${{ github.repository }}.git"
-          git push origin "$tag"
-          echo "Pushed $tag. The Publish to pub.dev workflow will take it from here."
