@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.9.0
+
+- **Date range selection.** New `showDrumDateRangePicker` (a drop in style
+  replacement for Flutter's `showDateRangePicker`, returning a `DateTimeRange?`)
+  and the inline `DrumDateRangePicker`. Tap a start day then an end day; the
+  in-between days are highlighted. This replaces the previous v1.0 stub that
+  threw `UnimplementedError`.
+- **Multiple date selection.** New `showDrumMultiDatePicker` (returning
+  `List<DateTime>?`) and the inline `DrumMultiDatePicker` let the user pick any
+  number of individual days by tapping to toggle.
+- Both honor every selection rule the single picker does: alternative calendars,
+  working day and holiday rules (`disabledWeekdays`, `holidays`), a custom
+  `firstDayOfWeek`, a `selectableDayPredicate`, and per instance theming.
+
 ## 1.8.0
 
 - **Drop-in replacement layer.** New widgets and mappings let you migrate from

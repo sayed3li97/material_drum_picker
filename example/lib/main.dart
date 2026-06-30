@@ -12,6 +12,7 @@ import 'screens/dropin_screen.dart';
 import 'screens/hijri_screen.dart';
 import 'screens/inline_form_screen.dart';
 import 'screens/localization_screen.dart';
+import 'screens/range_screen.dart';
 import 'screens/rtl_screen.dart';
 import 'screens/scheduling_screen.dart';
 import 'screens/showcase_screen.dart';
@@ -56,6 +57,7 @@ class HomeScreen extends StatelessWidget {
   static const _demos = <(String, String, WidgetBuilder)>[
     ('Showcase', 'All options live, side by side', _showcase),
     ('Date + time', 'Combined date & time picker', _dateTime),
+    ('Range & multi', 'Date range and multiple dates', _range),
     ('Time only', '12-hour and 24-hour time picker', _time),
     ('Hijri', 'Umm al-Qura calendar in Arabic', _hijri),
     ('Chinese', 'Lunisolar calendar with leap months', _chinese),
@@ -73,6 +75,7 @@ class HomeScreen extends StatelessWidget {
 
   static Widget _showcase(BuildContext c) => const ShowcaseScreen();
   static Widget _dateTime(BuildContext c) => const DateTimeScreen();
+  static Widget _range(BuildContext c) => const RangeScreen();
   static Widget _time(BuildContext c) => const TimeScreen();
   static Widget _hijri(BuildContext c) => const HijriScreen();
   static Widget _chinese(BuildContext c) => const ChineseScreen();

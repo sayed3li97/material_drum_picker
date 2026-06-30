@@ -16,6 +16,7 @@ class DayCell extends StatelessWidget {
     required this.onTap,
     required this.tokens,
     this.label,
+    this.isInRange = false,
   });
 
   /// The day-of-month number shown in the cell.
@@ -40,6 +41,10 @@ class DayCell extends StatelessWidget {
   /// Resolved visual tokens.
   final DrumPickerResolved tokens;
 
+  /// Whether this day falls inside a selected range (drawn with a soft fill
+  /// behind the cell). The range endpoints also set [isSelected].
+  final bool isInRange;
+
   @override
   Widget build(BuildContext context) {
     Color background = Colors.transparent;
@@ -57,6 +62,47 @@ class DayCell extends StatelessWidget {
         ? tokens.dayShape.copyWith(side: BorderSide(color: tokens.todayColor))
         : tokens.dayShape;
 
+    if (isInRange && !isSelected && isEnabled) {
+      // An in-range day that is not an endpoint keeps the normal foreground.
+      foreground = tokens.dayForegroundColor;
+    }
+
+    Widget cell = Material(
+      color: background,
+      shape: shape,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: isEnabled ? onTap : null,
+        child: Center(
+          child: Text(
+            label ?? '$day',
+            style: TextStyle(
+              color: foreground,
+              fontWeight: isSelected || isToday ? FontWeight.w600 : null,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (isInRange) {
+      // A soft fill behind the cell marks the days within the range.
+      cell = Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: tokens.selectedDayBackgroundColor.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+          cell,
+        ],
+      );
+    }
+
     return Semantics(
       button: true,
       enabled: isEnabled,
@@ -68,23 +114,7 @@ class DayCell extends StatelessWidget {
           // 44dp minimum touch target (WCAG 2.5.5).
           width: 44,
           height: 44,
-          child: Material(
-            color: background,
-            shape: shape,
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: isEnabled ? onTap : null,
-              child: Center(
-                child: Text(
-                  label ?? '$day',
-                  style: TextStyle(
-                    color: foreground,
-                    fontWeight: isSelected || isToday ? FontWeight.w600 : null,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          child: cell,
         ),
       ),
     );

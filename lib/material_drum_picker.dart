@@ -42,4 +42,7 @@ export 'src/widgets/drum_picker.dart'
 export 'src/widgets/drum_picker_dialog.dart' show showDrumDatePicker;
 export 'src/widgets/drum_time_picker.dart'
     show DrumTimePicker, showDrumTimePicker;
-export 'src/widgets/drum_picker_range_dialog.dart' show showDrumDateRangePicker;
+export 'src/widgets/drum_picker_range_dialog.dart'
+    show showDrumDateRangePicker, showDrumMultiDatePicker;
+export 'src/widgets/range/drum_range_pickers.dart'
+    show DrumDateRangePicker, DrumMultiDatePicker;
