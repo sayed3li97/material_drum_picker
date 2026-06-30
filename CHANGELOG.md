@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.8.0
+
+- **Drop-in replacement layer.** New widgets and mappings let you migrate from
+  the built in pickers by changing only the widget name, while gaining every
+  extra option this package offers.
+  - `DrumCalendarDatePicker` mirrors Flutter's `CalendarDatePicker` (a header
+    less inline grid with `onDateChanged`, `onDisplayedMonthChanged`, and
+    `initialCalendarMode`).
+  - `DrumCupertinoDatePicker` mirrors Cupertino's `CupertinoDatePicker` (a
+    header less inline wheel with `mode`, `initialDateTime`, streaming
+    `onDateTimeChanged`, `minimumDate`/`maximumDate`, `minuteInterval`,
+    `use24hFormat`, `dateOrder`, `backgroundColor`, `showDayOfWeek`, and
+    `itemExtent`).
+  - `showDrumDatePicker` and `showDrumDateTimePicker` now accept Flutter's
+    `initialEntryMode` (`DatePickerEntryMode`) and map it to the picker's mode
+    and toggle.
+- New `showHeader` flag on `DrumPicker` and `DrumTimePicker` for a bare,
+  embeddable picker (used by the inline drop-ins). Defaults to true.
+- The drop-ins also expose this package's extras that the originals lack:
+  alternative calendars, working day and holiday rules, a custom first day of
+  week, and theming.
+
 ## 1.7.0
 
 - **Working days only.** New optional `disabledWeekdays` makes the given

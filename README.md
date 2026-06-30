@@ -43,6 +43,9 @@ the **Showcase** screen.
 - **Pluggable data backed calendars.** Drive the picker from a published
   dataset of month start dates (for an official or committee lunar calendar)
   with `TabularLunarCalendarSystem`, passed through `calendarSystem`.
+- **Drop-in replacements** for `showDatePicker`, `showTimePicker`,
+  `CalendarDatePicker`, and `CupertinoDatePicker`: rename the widget and the
+  swap is done, with every extra option available on top.
 - **Full API parity** with `showDatePicker` and `CupertinoDatePicker`. Shared
   parameters keep the same names so migration is a one line change.
 - **`selectableDayPredicate`** to disable weekends, holidays, or any custom
@@ -545,9 +548,28 @@ and English Hijri month names, while Umm al-Qura with an Arabic locale shows the
 Arabic month names and that locale's digits, flipping right to left exactly the
 way the Gregorian calendar does.
 
-## Migration from showDatePicker
+## Drop-in replacements
 
-Most parameters keep the same name, so usually only the function name changes:
+This package mirrors the constructors and functions of Flutter's Material and
+Cupertino pickers, so in most cases **you only change the widget name and the
+swap is done**. Each replacement also unlocks options the originals do not have
+(drum mode, calendar systems, working days and holidays, theming, and more),
+all optional.
+
+![drop in replacements, rename the widget and keep your code](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/dropin.png)
+
+| Flutter / Cupertino | This package | Shape |
+|---|---|---|
+| `showDatePicker(...)` | `showDrumDatePicker(...)` | modal, returns `DateTime?` |
+| `showTimePicker(...)` | `showDrumTimePicker(...)` | modal, returns `TimeOfDay?` |
+| `CalendarDatePicker(...)` | `DrumCalendarDatePicker(...)` | inline grid, `onDateChanged` |
+| `CupertinoDatePicker(...)` | `DrumCupertinoDatePicker(...)` | inline wheel, streaming `onDateTimeChanged` |
+
+### Modal pickers
+
+The shared parameters keep the same names, so usually only the function name
+changes. `showDrumDatePicker` even accepts Flutter's `initialEntryMode`
+(`DatePickerEntryMode`) and maps it for you:
 
 ```dart
 // Before
@@ -556,9 +578,9 @@ showDatePicker(
   initialDate: myDate,
   firstDate: DateTime(1900),
   lastDate: DateTime(2100),
+  initialEntryMode: DatePickerEntryMode.calendarOnly,
   selectableDayPredicate: myPredicate,
   helpText: 'PICK DATE',
-  locale: myLocale,
 );
 
 // After, identical parameter names
@@ -567,12 +589,42 @@ showDrumDatePicker(
   initialDate: myDate,
   firstDate: DateTime(1900),
   lastDate: DateTime(2100),
+  initialEntryMode: DatePickerEntryMode.calendarOnly,
   selectableDayPredicate: myPredicate,
   helpText: 'PICK DATE',
-  locale: myLocale,
-  initialMode: DrumPickerMode.calendar, // optional, same feel as showDatePicker
 );
 ```
+
+### Inline widgets
+
+`DrumCalendarDatePicker` matches `CalendarDatePicker` (a header-less inline
+grid), and `DrumCupertinoDatePicker` matches `CupertinoDatePicker` (a
+header-less inline wheel that streams changes through `onDateTimeChanged`):
+
+```dart
+// Before
+CupertinoDatePicker(
+  mode: CupertinoDatePickerMode.date,
+  initialDateTime: _date,
+  onDateTimeChanged: (d) => setState(() => _date = d),
+);
+
+// After
+DrumCupertinoDatePicker(
+  mode: CupertinoDatePickerMode.date,
+  initialDateTime: _date,
+  onDateTimeChanged: (d) => setState(() => _date = d),
+  // Optional extras the Cupertino widget lacks:
+  calendar: DrumCalendarType.hijri,
+  disabledWeekdays: const {DateTime.saturday, DateTime.sunday},
+);
+```
+
+Notes on parity: a handful of Material-only parameters that have no equivalent
+(for example `initialDatePickerMode` year view, or the entry-mode switch icons)
+are accepted where it keeps the call compiling, and otherwise can simply be
+removed. `CupertinoDatePickerMode.monthYear` is approximated with the full date
+columns.
 
 ## Contributing
 

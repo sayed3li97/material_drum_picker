@@ -38,6 +38,7 @@ Future<DateTime?> showDrumDatePicker({
   Set<DateTime>? holidays,
   int? firstDayOfWeek,
   DrumPickerMode initialMode = DrumPickerMode.drum,
+  DatePickerEntryMode? initialEntryMode,
   bool showModeToggle = true,
   DrumColumnOrder? columnOrder,
   bool showDayOfWeekInDrum = false,
@@ -75,6 +76,25 @@ Future<DateTime?> showDrumDatePicker({
   assert(
       !firstDate.isAfter(lastDate), 'firstDate must be on or before lastDate');
 
+  // Map Flutter's DatePickerEntryMode onto the picker's mode and toggle, so a
+  // call migrated from showDatePicker keeps working unchanged.
+  var effectiveMode = initialMode;
+  var effectiveShowToggle = showModeToggle;
+  switch (initialEntryMode) {
+    case null:
+      break;
+    case DatePickerEntryMode.calendar:
+      effectiveMode = DrumPickerMode.calendar;
+    case DatePickerEntryMode.input:
+      effectiveMode = DrumPickerMode.input;
+    case DatePickerEntryMode.calendarOnly:
+      effectiveMode = DrumPickerMode.calendar;
+      effectiveShowToggle = false;
+    case DatePickerEntryMode.inputOnly:
+      effectiveMode = DrumPickerMode.input;
+      effectiveShowToggle = false;
+  }
+
   Widget dialog = _DrumPickerDialog(
     initialDate: initialDate,
     firstDate: firstDate,
@@ -84,8 +104,8 @@ Future<DateTime?> showDrumDatePicker({
     disabledWeekdays: disabledWeekdays,
     holidays: holidays,
     firstDayOfWeek: firstDayOfWeek,
-    initialMode: initialMode,
-    showModeToggle: showModeToggle,
+    initialMode: effectiveMode,
+    showModeToggle: effectiveShowToggle,
     columnOrder: columnOrder,
     showDayOfWeekInDrum: showDayOfWeekInDrum,
     monthFormat: monthFormat,

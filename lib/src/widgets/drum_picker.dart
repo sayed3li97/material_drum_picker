@@ -52,6 +52,7 @@ class DrumPicker extends StatefulWidget {
     this.firstDayOfWeek,
     this.initialMode = DrumPickerMode.drum,
     this.showModeToggle = true,
+    this.showHeader = true,
     this.columnOrder,
     this.showDayOfWeekInDrum = false,
     this.monthFormat = DrumMonthFormat.name,
@@ -138,6 +139,12 @@ class DrumPicker extends StatefulWidget {
 
   /// Whether to show the mode toggle tabs.
   final bool showModeToggle;
+
+  /// Whether to show the header (the help text and the large headline date).
+  ///
+  /// Set to false for a bare, embeddable picker, such as a header-less inline
+  /// calendar or wheel. Defaults to true.
+  final bool showHeader;
 
   /// The order of the day/month/year columns in drum mode.
   ///
@@ -446,17 +453,20 @@ class _DrumPickerState extends State<DrumPicker> {
     Widget content = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        PickerHeader(
-          helpText: widget.helpText ??
-              (widget.pickTime ? 'SELECT DATE & TIME' : 'SELECT DATE'),
-          headline: _headline(locale, localeName),
-          tokens: tokens,
-          timeText: widget.pickTime
-              ? (use24h ? DateFormat.Hm(localeName) : DateFormat.jm(localeName))
-                  .format(_selectedDate)
-              : null,
-          secondaryText: secondary,
-        ),
+        if (widget.showHeader)
+          PickerHeader(
+            helpText: widget.helpText ??
+                (widget.pickTime ? 'SELECT DATE & TIME' : 'SELECT DATE'),
+            headline: _headline(locale, localeName),
+            tokens: tokens,
+            timeText: widget.pickTime
+                ? (use24h
+                        ? DateFormat.Hm(localeName)
+                        : DateFormat.jm(localeName))
+                    .format(_selectedDate)
+                : null,
+            secondaryText: secondary,
+          ),
         if (widget.showModeToggle)
           ModeTabBar(
             mode: _mode,
