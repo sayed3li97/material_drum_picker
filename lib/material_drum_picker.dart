@@ -20,6 +20,8 @@ export 'src/calendar/gregorian_calendar_system.dart';
 export 'src/calendar/chinese/chinese_calendar_system.dart'
     show ChineseCalendarSystem;
 export 'src/calendar/hijri/hijri_calendar_system.dart' show HijriCalendarSystem;
+export 'src/calendar/jalali/jalali_calendar_system.dart'
+    show JalaliCalendarSystem;
 export 'src/calendar/tabular_lunar_calendar_system.dart'
     show TabularLunarCalendarSystem, TabularLunarMonth;
 

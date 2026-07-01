@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.10.0
+
+- **Persian Solar Hijri (Jalali) calendar.** New `DrumCalendarType.jalali`
+  presents every date mode (drum, calendar, and input) in the official calendar
+  of Iran and Afghanistan, composed with the existing right to left layout,
+  theming, working day and holiday rules, first day of week, and range or
+  multiple selection. The returned value stays a Gregorian `DateTime`.
+  - Persian month names and Eastern Arabic digits in a Persian (`fa`) locale,
+    transliterated names (Farvardin ... Esfand) elsewhere.
+  - Automatic leap year handling: the last month (Esfand) has 29 days, or 30 in
+    a leap year; the first six months have 31 days and the next five have 30.
+  - The conversion is purely arithmetic (the standard algorithm used by the
+    Iranian civil calendar), so no dataset is shipped. The supported range is
+    Jalali years 1178 to 1633 (Gregorian 1799 to 2255), verified day for day
+    against a reference implementation.
+- New public `JalaliCalendarSystem` for use through `calendarSystem`.
+
 ## 1.8.0
 
 - **Drop-in replacement layer.** New widgets and mappings let you migrate from

@@ -9,12 +9,14 @@ const _calendars = <DrumCalendarType>[
   DrumCalendarType.gregorian,
   DrumCalendarType.hijri,
   DrumCalendarType.chinese,
+  DrumCalendarType.jalali,
 ];
 
 DrumCalendarSystem _systemFor(DrumCalendarType type) => switch (type) {
       DrumCalendarType.gregorian => const GregorianCalendarSystem(),
       DrumCalendarType.hijri => const HijriCalendarSystem(),
       DrumCalendarType.chinese => const ChineseCalendarSystem(),
+      DrumCalendarType.jalali => const JalaliCalendarSystem(),
     };
 
 void main() {
