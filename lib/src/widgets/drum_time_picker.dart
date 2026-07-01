@@ -28,6 +28,7 @@ class DrumTimePicker extends StatefulWidget {
     this.confirmText,
     this.cancelText,
     this.showActions = true,
+    this.showHeader = true,
     this.locale,
     this.textDirection,
     this.theme,
@@ -67,6 +68,10 @@ class DrumTimePicker extends StatefulWidget {
 
   /// Whether to show Cancel/OK action buttons below the picker.
   final bool showActions;
+
+  /// Whether to show the header (the help text and the large time). Set to
+  /// false for a bare, embeddable time wheel. Defaults to true.
+  final bool showHeader;
 
   /// Locale override for time formatting.
   final Locale? locale;
@@ -135,7 +140,7 @@ class _DrumTimePickerState extends State<DrumTimePicker> {
     Widget content = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildHeader(tokens, timeText),
+        if (widget.showHeader) _buildHeader(tokens, timeText),
         TimeStrip(
           time: _time,
           use24hFormat: use24h,

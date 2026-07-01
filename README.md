@@ -40,9 +40,16 @@ the **Showcase** screen.
   the Chinese calendar with full leap month support (12 or 13 months a year),
   astronomical month lengths, traditional month names, and the sexagenary year
   and zodiac.
+- **Persian Solar Hijri (Jalali) calendar.** Set `calendar:
+  DrumCalendarType.jalali` for the official calendar of Iran and Afghanistan,
+  with Persian month names and digits and automatic leap year handling, computed
+  arithmetically with no dataset.
 - **Pluggable data backed calendars.** Drive the picker from a published
   dataset of month start dates (for an official or committee lunar calendar)
   with `TabularLunarCalendarSystem`, passed through `calendarSystem`.
+- **Drop-in replacements** for `showDatePicker`, `showTimePicker`,
+  `CalendarDatePicker`, and `CupertinoDatePicker`: rename the widget and the
+  swap is done, with every extra option available on top.
 - **Full API parity** with `showDatePicker` and `CupertinoDatePicker`. Shared
   parameters keep the same names so migration is a one line change.
 - **`selectableDayPredicate`** to disable weekends, holidays, or any custom
@@ -100,8 +107,8 @@ final picked = await showDrumDatePicker(
 ```
 
 The built in lunar calendar is Umm al-Qura, the official civil calendar of
-Saudi Arabia. The Persian solar (Jalali) calendar is a separate system and is
-not included; the abstraction is designed so it can be added later.
+Saudi Arabia. The Persian solar (Jalali) calendar is a separate system, covered
+in its own section below.
 
 ![Hijri calendar with Arabic right to left](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/hijri.png)
 
@@ -142,6 +149,38 @@ validated against a second engine, and vendored as a pure Dart table for lunar
 years 1900-2100. As with every Chinese calendar implementation, dates far in the
 future are predictive, since official ephemerides are published only a few years
 ahead.
+
+### Persian Solar Hijri (Jalali)
+
+Pass `calendar: DrumCalendarType.jalali` to present every date mode in the
+Persian Solar Hijri (Jalali) calendar, the official calendar of Iran and
+Afghanistan. The value you receive is still a Gregorian `DateTime`.
+
+```dart
+final picked = await showDrumDatePicker(
+  context: context,
+  firstDate: DateTime(2000),
+  lastDate: DateTime(2050),
+  calendar: DrumCalendarType.jalali,
+  locale: const Locale('fa'),
+);
+```
+
+![Persian Solar Hijri (Jalali) calendar with Persian right to left](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/jalali.png)
+
+The year begins at the vernal equinox (Nowruz, around 21 March). The first six
+months have 31 days, the next five have 30, and the last month (Esfand) has 29
+days, or 30 in a leap year, all handled automatically. In a Persian (`fa`)
+locale the picker flips right to left, shows the Persian month names (فروردین
+... اسفند) and Eastern Arabic digits, and starts the week on Saturday; English
+locales show transliterated names (Farvardin ... Esfand). Set
+`showGregorianAlongside: true` to show the Gregorian equivalent under the
+headline.
+
+Unlike the lunar calendars, the Jalali conversion is purely arithmetic (the
+standard algorithm used by the Iranian civil calendar), so no dataset is
+shipped. The supported range is Jalali years 1178 to 1633 (Gregorian 1799 to
+2255), verified day for day against a reference implementation.
 
 ### Data backed calendars
 
@@ -545,9 +584,28 @@ and English Hijri month names, while Umm al-Qura with an Arabic locale shows the
 Arabic month names and that locale's digits, flipping right to left exactly the
 way the Gregorian calendar does.
 
-## Migration from showDatePicker
+## Drop-in replacements
 
-Most parameters keep the same name, so usually only the function name changes:
+This package mirrors the constructors and functions of Flutter's Material and
+Cupertino pickers, so in most cases **you only change the widget name and the
+swap is done**. Each replacement also unlocks options the originals do not have
+(drum mode, calendar systems, working days and holidays, theming, and more),
+all optional.
+
+![drop in replacements, rename the widget and keep your code](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/dropin.png)
+
+| Flutter / Cupertino | This package | Shape |
+|---|---|---|
+| `showDatePicker(...)` | `showDrumDatePicker(...)` | modal, returns `DateTime?` |
+| `showTimePicker(...)` | `showDrumTimePicker(...)` | modal, returns `TimeOfDay?` |
+| `CalendarDatePicker(...)` | `DrumCalendarDatePicker(...)` | inline grid, `onDateChanged` |
+| `CupertinoDatePicker(...)` | `DrumCupertinoDatePicker(...)` | inline wheel, streaming `onDateTimeChanged` |
+
+### Modal pickers
+
+The shared parameters keep the same names, so usually only the function name
+changes. `showDrumDatePicker` even accepts Flutter's `initialEntryMode`
+(`DatePickerEntryMode`) and maps it for you:
 
 ```dart
 // Before
@@ -556,9 +614,9 @@ showDatePicker(
   initialDate: myDate,
   firstDate: DateTime(1900),
   lastDate: DateTime(2100),
+  initialEntryMode: DatePickerEntryMode.calendarOnly,
   selectableDayPredicate: myPredicate,
   helpText: 'PICK DATE',
-  locale: myLocale,
 );
 
 // After, identical parameter names
@@ -567,12 +625,42 @@ showDrumDatePicker(
   initialDate: myDate,
   firstDate: DateTime(1900),
   lastDate: DateTime(2100),
+  initialEntryMode: DatePickerEntryMode.calendarOnly,
   selectableDayPredicate: myPredicate,
   helpText: 'PICK DATE',
-  locale: myLocale,
-  initialMode: DrumPickerMode.calendar, // optional, same feel as showDatePicker
 );
 ```
+
+### Inline widgets
+
+`DrumCalendarDatePicker` matches `CalendarDatePicker` (a header-less inline
+grid), and `DrumCupertinoDatePicker` matches `CupertinoDatePicker` (a
+header-less inline wheel that streams changes through `onDateTimeChanged`):
+
+```dart
+// Before
+CupertinoDatePicker(
+  mode: CupertinoDatePickerMode.date,
+  initialDateTime: _date,
+  onDateTimeChanged: (d) => setState(() => _date = d),
+);
+
+// After
+DrumCupertinoDatePicker(
+  mode: CupertinoDatePickerMode.date,
+  initialDateTime: _date,
+  onDateTimeChanged: (d) => setState(() => _date = d),
+  // Optional extras the Cupertino widget lacks:
+  calendar: DrumCalendarType.hijri,
+  disabledWeekdays: const {DateTime.saturday, DateTime.sunday},
+);
+```
+
+Notes on parity: a handful of Material-only parameters that have no equivalent
+(for example `initialDatePickerMode` year view, or the entry-mode switch icons)
+are accepted where it keeps the call compiling, and otherwise can simply be
+removed. `CupertinoDatePickerMode.monthYear` is approximated with the full date
+columns.
 
 ## Contributing
 
@@ -587,8 +675,9 @@ the development setup and the checks that run in CI, and note the
 - **v1.1** Combined date and time picking (`pickTime`, `showDrumDateTimePicker`).
 - **v1.2** Standalone time picker (`DrumTimePicker`, `showDrumTimePicker`).
 - **v1.3** Hijri (Umm al-Qura) calendar and pluggable data backed calendars.
-- **Next** Date range selection (`showDrumDateRangePicker`), and a Persian solar
-  (Jalali) calendar system.
+- **v1.6** Chinese lunisolar calendar with leap month support.
+- **v1.8** Drop-in replacements for the Material and Cupertino pickers.
+- **v1.10** Persian Solar Hijri (Jalali) calendar system.
 
 ## License
 
