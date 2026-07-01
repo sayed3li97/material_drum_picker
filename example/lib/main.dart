@@ -11,6 +11,7 @@ import 'screens/date_time_screen.dart';
 import 'screens/dropin_screen.dart';
 import 'screens/hijri_screen.dart';
 import 'screens/inline_form_screen.dart';
+import 'screens/jalali_screen.dart';
 import 'screens/localization_screen.dart';
 import 'screens/rtl_screen.dart';
 import 'screens/scheduling_screen.dart';
@@ -40,6 +41,7 @@ class ExampleApp extends StatelessWidget {
         Locale('en'),
         Locale('fr'),
         Locale('ar'),
+        Locale('fa'),
         Locale('ja'),
         Locale('zh'),
       ],
@@ -59,6 +61,7 @@ class HomeScreen extends StatelessWidget {
     ('Time only', '12-hour and 24-hour time picker', _time),
     ('Hijri', 'Umm al-Qura calendar in Arabic', _hijri),
     ('Chinese', 'Lunisolar calendar with leap months', _chinese),
+    ('Persian', 'Jalali solar calendar in Persian', _jalali),
     ('Drop in', 'Cupertino and Calendar replacements', _dropin),
     ('Data backed', 'Committee calendar from a dataset', _dataBacked),
     ('Basic', 'Drop-in replacement for showDatePicker', _basic),
@@ -76,6 +79,7 @@ class HomeScreen extends StatelessWidget {
   static Widget _time(BuildContext c) => const TimeScreen();
   static Widget _hijri(BuildContext c) => const HijriScreen();
   static Widget _chinese(BuildContext c) => const ChineseScreen();
+  static Widget _jalali(BuildContext c) => const JalaliScreen();
   static Widget _dropin(BuildContext c) => const DropinScreen();
   static Widget _dataBacked(BuildContext c) => const DataBackedCalendarScreen();
   static Widget _basic(BuildContext c) => const BasicScreen();

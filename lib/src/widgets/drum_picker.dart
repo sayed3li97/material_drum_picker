@@ -7,6 +7,7 @@ import '../calendar/chinese/chinese_calendar_system.dart';
 import '../calendar/drum_calendar_system.dart';
 import '../calendar/gregorian_calendar_system.dart';
 import '../calendar/hijri/hijri_calendar_system.dart';
+import '../calendar/jalali/jalali_calendar_system.dart';
 import '../models/drum_calendar_type.dart';
 import '../models/drum_column_order.dart';
 import '../models/drum_date_format.dart';
@@ -291,6 +292,7 @@ class _DrumPickerState extends State<DrumPicker> {
         switch (widget.calendar) {
           DrumCalendarType.hijri => const HijriCalendarSystem(),
           DrumCalendarType.chinese => const ChineseCalendarSystem(),
+          DrumCalendarType.jalali => const JalaliCalendarSystem(),
           DrumCalendarType.gregorian => const GregorianCalendarSystem(),
         };
 

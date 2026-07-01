@@ -16,4 +16,8 @@ enum DrumCalendarType {
   /// The Chinese lunisolar calendar, with leap months (12 or 13 months a year),
   /// astronomically computed month lengths, and sexagenary year names.
   chinese,
+
+  /// The Persian Solar Hijri (Jalali) calendar, the official calendar of Iran
+  /// and Afghanistan, computed arithmetically with no dataset.
+  jalali,
 }
