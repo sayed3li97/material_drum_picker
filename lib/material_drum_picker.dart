@@ -5,6 +5,8 @@ library;
 
 // Models
 export 'src/models/drum_calendar_type.dart';
+export 'src/models/drum_event_marker.dart'
+    show DrumEventMarker, DrumEventLoader, DrumMarkerBuilder;
 export 'src/models/drum_column_order.dart';
 export 'src/models/drum_date_format.dart';
 export 'src/models/drum_month_format.dart';

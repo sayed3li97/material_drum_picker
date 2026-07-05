@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../calendar/drum_calendar_system.dart';
 import '../models/drum_calendar_type.dart';
+import '../models/drum_event_marker.dart';
 import '../models/drum_picker_mode.dart';
 import '../theme/drum_picker_theme.dart';
 import '../widgets/drum_picker.dart';
@@ -35,7 +36,9 @@ import '../widgets/drum_picker.dart';
 /// On top of the original API it also exposes this package's extras, which the
 /// Material widget does not support: alternative calendars ([calendar],
 /// [calendarSystem]), working day and holiday rules ([disabledWeekdays],
-/// [holidays]), a custom [firstDayOfWeek], and per instance [theme] overrides.
+/// [holidays]), a custom [firstDayOfWeek], event markers ([eventLoader],
+/// [markerBuilder]) that turn the grid into a lightweight event calendar, and
+/// per instance [theme] overrides.
 class DrumCalendarDatePicker extends StatelessWidget {
   /// Creates a header less inline calendar, matching `CalendarDatePicker`.
   const DrumCalendarDatePicker({
@@ -53,6 +56,9 @@ class DrumCalendarDatePicker extends StatelessWidget {
     this.disabledWeekdays,
     this.holidays,
     this.firstDayOfWeek,
+    this.eventLoader,
+    this.markerBuilder,
+    this.maxEventMarkers = kDefaultMaxEventMarkers,
     this.theme,
     this.locale,
   });
@@ -98,6 +104,16 @@ class DrumCalendarDatePicker extends StatelessWidget {
   /// The first day of the week (`DateTime.monday` to `DateTime.sunday`).
   final int? firstDayOfWeek;
 
+  /// Returns the event markers to show under each day, or an empty list for
+  /// days with no events. Null shows no markers.
+  final DrumEventLoader? eventLoader;
+
+  /// Optional builder replacing the default marker dots.
+  final DrumMarkerBuilder? markerBuilder;
+
+  /// The maximum number of default marker dots per day. Defaults to four.
+  final int maxEventMarkers;
+
   /// Per instance visual token overrides.
   final DrumPickerTheme? theme;
 
@@ -122,6 +138,9 @@ class DrumCalendarDatePicker extends StatelessWidget {
       disabledWeekdays: disabledWeekdays,
       holidays: holidays,
       firstDayOfWeek: firstDayOfWeek,
+      eventLoader: eventLoader,
+      markerBuilder: markerBuilder,
+      maxEventMarkers: maxEventMarkers,
       theme: theme,
       locale: locale,
       onChanged: (date) {

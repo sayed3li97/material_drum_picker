@@ -44,6 +44,9 @@ the **Showcase** screen.
   DrumCalendarType.jalali` for the official calendar of Iran and Afghanistan,
   with Persian month names and digits and automatic leap year handling, computed
   arithmetically with no dataset.
+- **Event markers.** Pass an `eventLoader` to show dots (or your own
+  `markerBuilder` widget) under the days that have events, turning the calendar
+  grid into a lightweight event calendar.
 - **Pluggable data backed calendars.** Drive the picker from a published
   dataset of month start dates (for an official or committee lunar calendar)
   with `TabularLunarCalendarSystem`, passed through `calendarSystem`.
@@ -71,6 +74,10 @@ the **Showcase** screen.
   screen reader semantics, and reduced motion support.
 - **All six platforms:** Android, iOS, web, macOS, Windows, and Linux.
 - Zero runtime dependencies beyond Flutter and `intl`.
+
+See [COMPARISON.md](COMPARISON.md) for an honest, side by side comparison with
+the most downloaded date pickers on pub.dev, including where each of them is the
+better choice.
 
 ## Pickers at a glance
 
@@ -209,6 +216,58 @@ any specific publisher's data. Supply the dataset from your own app, with the
 publisher's permission and attribution, and refresh it roughly once a Hijri
 year. Compare your `lastDate` with `system.maxSupported` to detect that the data
 is near its end.
+
+### Event markers
+
+Turn the calendar grid into a lightweight event calendar by returning markers
+for the days that have events. Pass an `eventLoader`, called once per visible
+day with its Gregorian date, and return a list of `DrumEventMarker`s. Days with
+markers show a row of dots (up to `maxEventMarkers`, four by default), and the
+event count is announced to screen readers.
+
+![Event markers: colored dots and a custom badge](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/events.png)
+
+```dart
+// Your own events, keyed by day.
+final eventsByDay = <DateTime, List<Meeting>>{ /* ... */ };
+
+showDrumDatePicker(
+  context: context,
+  firstDate: DateTime(2024, 1, 1),
+  lastDate: DateTime(2024, 12, 31),
+  initialEntryMode: DatePickerEntryMode.calendarOnly,
+  eventLoader: (day) =>
+      eventsByDay[DateUtils.dateOnly(day)]
+          ?.map((m) => DrumEventMarker(color: m.color, semanticLabel: m.title))
+          .toList() ??
+      const [],
+);
+```
+
+Each `DrumEventMarker` may set its own `color` (falling back to the
+`eventMarkerColor` theme token) and a `semanticLabel` for accessibility. For
+full control over what a day draws, pass a `markerBuilder` and return your own
+widget (for example a count badge); return `null` to fall back to the dots. It
+receives the full marker list, so you can show the exact count even past the dot
+cap:
+
+```dart
+DrumCalendarDatePicker(
+  initialDate: _date,
+  firstDate: DateTime(2024, 1, 1),
+  lastDate: DateTime(2024, 12, 31),
+  onDateChanged: (d) => setState(() => _date = d),
+  eventLoader: _load,
+  markerBuilder: (context, day, markers) => Align(
+    alignment: Alignment.topRight,
+    child: CircleAvatar(radius: 8, child: Text('${markers.length}')),
+  ),
+);
+```
+
+Markers work in every calendar mode surface: `DrumPicker`, `showDrumDatePicker`,
+and the `DrumCalendarDatePicker` drop-in, and compose with every calendar system
+(Gregorian, Hijri, Chinese, Jalali) and the working day and holiday rules.
 
 ## Installation
 
@@ -678,6 +737,7 @@ the development setup and the checks that run in CI, and note the
 - **v1.6** Chinese lunisolar calendar with leap month support.
 - **v1.8** Drop-in replacements for the Material and Cupertino pickers.
 - **v1.10** Persian Solar Hijri (Jalali) calendar system.
+- **v1.11** Event markers in the calendar grid.
 
 ## License
 

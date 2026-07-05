@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.11.0
+
+- **Event markers.** The calendar grid can now act as a lightweight event
+  calendar. Pass an `eventLoader` to `DrumPicker`, `showDrumDatePicker`, or the
+  `DrumCalendarDatePicker` drop-in; it is called once per visible day with its
+  canonical Gregorian date and returns a list of `DrumEventMarker`s.
+  - Days with markers show a row of dots (up to `maxEventMarkers`, four by
+    default). Each `DrumEventMarker` may set its own `color` (falling back to the
+    new `eventMarkerColor` theme token) and a `semanticLabel`.
+  - The event count is announced to screen readers.
+  - Pass a `markerBuilder` to draw your own marker widget (for example a count
+    badge) instead of the dots; it receives the full marker list.
+  - Works with every calendar system (Gregorian, Hijri, Chinese, Jalali) and the
+    working day and holiday rules.
+- New `eventMarkerColor` token on `DrumPickerTheme`.
+
 ## 1.10.0
 
 - **Persian Solar Hijri (Jalali) calendar.** New `DrumCalendarType.jalali`
