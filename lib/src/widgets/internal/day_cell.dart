@@ -21,6 +21,7 @@ class DayCell extends StatelessWidget {
     this.markerBuilder,
     this.markerDate,
     this.maxMarkers = kDefaultMaxEventMarkers,
+    this.isInRange = false,
   });
 
   /// The day-of-month number shown in the cell.
@@ -57,6 +58,10 @@ class DayCell extends StatelessWidget {
 
   /// The maximum number of dots the default marker row renders.
   final int maxMarkers;
+
+  /// Whether this day falls inside a selected range (drawn with a soft fill
+  /// behind the cell). The range endpoints also set [isSelected].
+  final bool isInRange;
 
   Widget? _buildMarkers(BuildContext context) {
     if (markers.isEmpty) return null;
@@ -110,11 +115,59 @@ class DayCell extends StatelessWidget {
       foreground = tokens.todayColor;
     }
 
+    if (isInRange && !isSelected && isEnabled) {
+      // An in-range day that is not an endpoint keeps the normal foreground.
+      foreground = tokens.dayForegroundColor;
+    }
+
     final shape = isToday && !isSelected
         ? tokens.dayShape.copyWith(side: BorderSide(color: tokens.todayColor))
         : tokens.dayShape;
 
     final markerRow = _buildMarkers(context);
+
+    // The day circle with its number and any event markers.
+    Widget cell = Material(
+      color: background,
+      shape: shape,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: isEnabled ? onTap : null,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Center(
+              child: Text(
+                label ?? '$day',
+                style: TextStyle(
+                  color: foreground,
+                  fontWeight: isSelected || isToday ? FontWeight.w600 : null,
+                ),
+              ),
+            ),
+            if (markerRow != null) Positioned(bottom: 5, child: markerRow),
+          ],
+        ),
+      ),
+    );
+
+    if (isInRange) {
+      // A soft fill behind the cell marks the days within the range.
+      cell = Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: tokens.selectedDayBackgroundColor.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+          cell,
+        ],
+      );
+    }
 
     return Semantics(
       button: true,
@@ -129,31 +182,7 @@ class DayCell extends StatelessWidget {
           // 44dp minimum touch target (WCAG 2.5.5).
           width: 44,
           height: 44,
-          child: Material(
-            color: background,
-            shape: shape,
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: isEnabled ? onTap : null,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Center(
-                    child: Text(
-                      label ?? '$day',
-                      style: TextStyle(
-                        color: foreground,
-                        fontWeight:
-                            isSelected || isToday ? FontWeight.w600 : null,
-                      ),
-                    ),
-                  ),
-                  if (markerRow != null)
-                    Positioned(bottom: 5, child: markerRow),
-                ],
-              ),
-            ),
-          ),
+          child: cell,
         ),
       ),
     );

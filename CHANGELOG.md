@@ -15,6 +15,21 @@
   - Works with every calendar system (Gregorian, Hijri, Chinese, Jalali) and the
     working day and holiday rules.
 - New `eventMarkerColor` token on `DrumPickerTheme`.
+- **Date range selection, as a calendar or a drum.** New
+  `showDrumDateRangePicker` (a drop in style replacement for Flutter's
+  `showDateRangePicker`, returning a `DateTimeRange?`) and the inline
+  `DrumDateRangePicker`. The user can pick on a Material 3 calendar grid (tap a
+  start day then an end day, with the in-between days highlighted) or on a
+  two-wheel drum (a Start roller and an End roller), switching between them with
+  a toggle. Use `initialMode` (`DrumRangeMode`) and `showModeToggle` to choose
+  the presentation. This replaces the previous v1.0 stub that threw
+  `UnimplementedError`.
+- **Multiple date selection.** New `showDrumMultiDatePicker` (returning
+  `List<DateTime>?`) and the inline `DrumMultiDatePicker` let the user pick any
+  number of individual days by tapping to toggle.
+- Both honor every selection rule the single picker does: alternative calendars,
+  working day and holiday rules (`disabledWeekdays`, `holidays`), a custom
+  `firstDayOfWeek`, a `selectableDayPredicate`, and per instance theming.
 
 ## 1.10.0
 
