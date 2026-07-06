@@ -261,8 +261,25 @@ DrumCalendarDatePicker(
   onDateChanged: (d) => setState(() => _date = d),
   eventLoader: _load,
   markerBuilder: (context, day, markers) => Align(
-    alignment: Alignment.topRight,
-    child: CircleAvatar(radius: 8, child: Text('${markers.length}')),
+    // Sit below the number, where the default dots go, so the day stays legible.
+    alignment: Alignment.bottomCenter,
+    child: Container(
+      margin: const EdgeInsets.only(bottom: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.error,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        '${markers.length}',
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onError,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          height: 1,
+        ),
+      ),
+    ),
   ),
 );
 ```

@@ -179,15 +179,14 @@ class _EventsShowcase extends StatelessWidget {
         onDateChanged: (_) {},
         eventLoader: _load,
         markerBuilder: (context, day, markers) => Align(
-          alignment: Alignment.topRight,
+          alignment: Alignment.bottomCenter,
           child: Container(
-            margin: const EdgeInsets.only(top: 2, right: 2),
-            padding: const EdgeInsets.all(3),
-            decoration: const BoxDecoration(
-              color: Color(0xFFC62828),
-              shape: BoxShape.circle,
+            margin: const EdgeInsets.only(bottom: 3),
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+            decoration: BoxDecoration(
+              color: const Color(0xFFC62828),
+              borderRadius: BorderRadius.circular(8),
             ),
-            constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
             child: Text(
               '${markers.length}',
               textAlign: TextAlign.center,
