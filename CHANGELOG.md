@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.12.0
+
+- **`DrumDateFormField`.** A `FormField<DateTime>` for date input inside a
+  `Form`, the way `TextFormField` works for text. It shows the selected date in
+  a decorated, read-only field, opens a `DrumPicker` dialog on tap, and takes
+  part in `Form.validate`, `Form.save`, and `Form.reset`, reporting errors
+  through its `InputDecoration` and calling `onChanged` and `onSaved`.
+  - The value is always a Gregorian `DateTime`, displayed in the active
+    `calendar` and `locale` (for example a Persian date for
+    `DrumCalendarType.jalali`); pass `formatValue` to format it yourself.
+  - Accepts the common picker options: `calendar`, `calendarSystem`,
+    `disabledWeekdays`, `holidays`, `firstDayOfWeek`, `selectableDayPredicate`,
+    `theme`, `labels`, and the initial mode.
+
 ## 1.11.0
 
 - **Event markers.** The calendar grid can now act as a lightweight event
