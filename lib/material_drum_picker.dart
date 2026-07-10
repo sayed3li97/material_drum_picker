@@ -42,6 +42,8 @@ export 'src/utils/drum_date_utils.dart' show DrumDateUtils;
 // Widgets
 export 'src/widgets/drum_date_time_picker_dialog.dart'
     show showDrumDateTimePicker;
+export 'src/widgets/drum_date_form_field.dart'
+    show DrumDateFormField, DrumDateFieldFormatter;
 export 'src/widgets/drum_picker.dart'
     show DrumPicker, DrumSelectableDayPredicate;
 export 'src/widgets/drum_picker_dialog.dart' show showDrumDatePicker;

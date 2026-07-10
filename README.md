@@ -55,6 +55,8 @@ the **Showcase** screen.
 - **Drop-in replacements** for `showDatePicker`, `showTimePicker`,
   `showDateRangePicker`, `CalendarDatePicker`, and `CupertinoDatePicker`: rename
   the widget and the swap is done, with every extra option available on top.
+- **`DrumDateFormField`**, a `FormField<DateTime>` for date input inside a
+  `Form`, with validation, save, and reset, like `TextFormField`.
 - **Full API parity** with `showDatePicker` and `CupertinoDatePicker`. Shared
   parameters keep the same names so migration is a one line change.
 - **`selectableDayPredicate`** to disable weekends, holidays, or any custom
@@ -817,6 +819,52 @@ are accepted where it keeps the call compiling, and otherwise can simply be
 removed. `CupertinoDatePickerMode.monthYear` is approximated with the full date
 columns.
 
+## Form field
+
+`DrumDateFormField` is a `FormField<DateTime>` for date input inside a `Form`,
+the way `TextFormField` is for text. It shows the selected date in a decorated,
+read-only field, opens the picker on tap, and takes part in `Form.validate`,
+`Form.save`, and `Form.reset`, reporting errors through its `InputDecoration`.
+
+![DrumDateFormField in a form: filled, empty, an error, and a Persian variant](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/form_field.png)
+
+```dart
+final _formKey = GlobalKey<FormState>();
+DateTime? _dob;
+
+Form(
+  key: _formKey,
+  child: Column(children: [
+    DrumDateFormField(
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      decoration: const InputDecoration(
+        labelText: 'Date of birth',
+        border: OutlineInputBorder(),
+        prefixIcon: Icon(Icons.cake_outlined),
+      ),
+      validator: (value) => value == null ? 'Please pick a date' : null,
+      onSaved: (value) => _dob = value,
+    ),
+    FilledButton(
+      onPressed: () {
+        if (_formKey.currentState!.validate()) {
+          _formKey.currentState!.save(); // _dob is set
+        }
+      },
+      child: const Text('Submit'),
+    ),
+  ]),
+);
+```
+
+The value is always a Gregorian `DateTime`, and the field displays it in the
+active `calendar` and `locale` (for example a Persian date when
+`calendar: DrumCalendarType.jalali`); pass `formatValue` to format it yourself.
+It accepts the common picker options too (`calendar`, `calendarSystem`,
+`disabledWeekdays`, `holidays`, `firstDayOfWeek`, `selectableDayPredicate`,
+`theme`, and the initial mode).
+
 ## Contributing
 
 Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for
@@ -835,6 +883,7 @@ the development setup and the checks that run in CI, and note the
 - **v1.10** Persian Solar Hijri (Jalali) calendar system.
 - **v1.11** Date range and multiple date selection, and event markers in the
   calendar grid.
+- **v1.12** `DrumDateFormField` for `Form` integration.
 
 ## License
 
