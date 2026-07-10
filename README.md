@@ -44,12 +44,17 @@ the **Showcase** screen.
   DrumCalendarType.jalali` for the official calendar of Iran and Afghanistan,
   with Persian month names and digits and automatic leap year handling, computed
   arithmetically with no dataset.
+- **Event markers.** Pass an `eventLoader` to show dots (or your own
+  `markerBuilder` widget) under the days that have events, turning the calendar
+  grid into a lightweight event calendar.
 - **Pluggable data backed calendars.** Drive the picker from a published
   dataset of month start dates (for an official or committee lunar calendar)
   with `TabularLunarCalendarSystem`, passed through `calendarSystem`.
+- **Date range and multiple date selection** via `showDrumDateRangePicker` /
+  `DrumDateRangePicker` and `showDrumMultiDatePicker` / `DrumMultiDatePicker`.
 - **Drop-in replacements** for `showDatePicker`, `showTimePicker`,
-  `CalendarDatePicker`, and `CupertinoDatePicker`: rename the widget and the
-  swap is done, with every extra option available on top.
+  `showDateRangePicker`, `CalendarDatePicker`, and `CupertinoDatePicker`: rename
+  the widget and the swap is done, with every extra option available on top.
 - **Full API parity** with `showDatePicker` and `CupertinoDatePicker`. Shared
   parameters keep the same names so migration is a one line change.
 - **`selectableDayPredicate`** to disable weekends, holidays, or any custom
@@ -71,6 +76,10 @@ the **Showcase** screen.
   screen reader semantics, and reduced motion support.
 - **All six platforms:** Android, iOS, web, macOS, Windows, and Linux.
 - Zero runtime dependencies beyond Flutter and `intl`.
+
+See [COMPARISON.md](COMPARISON.md) for an honest, side by side comparison with
+the most downloaded date pickers on pub.dev, including where each of them is the
+better choice.
 
 ## Pickers at a glance
 
@@ -209,6 +218,75 @@ any specific publisher's data. Supply the dataset from your own app, with the
 publisher's permission and attribution, and refresh it roughly once a Hijri
 year. Compare your `lastDate` with `system.maxSupported` to detect that the data
 is near its end.
+
+### Event markers
+
+Turn the calendar grid into a lightweight event calendar by returning markers
+for the days that have events. Pass an `eventLoader`, called once per visible
+day with its Gregorian date, and return a list of `DrumEventMarker`s. Days with
+markers show a row of dots (up to `maxEventMarkers`, four by default), and the
+event count is announced to screen readers.
+
+![Event markers: colored dots and a custom badge](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/events.png)
+
+```dart
+// Your own events, keyed by day.
+final eventsByDay = <DateTime, List<Meeting>>{ /* ... */ };
+
+showDrumDatePicker(
+  context: context,
+  firstDate: DateTime(2024, 1, 1),
+  lastDate: DateTime(2024, 12, 31),
+  initialEntryMode: DatePickerEntryMode.calendarOnly,
+  eventLoader: (day) =>
+      eventsByDay[DateUtils.dateOnly(day)]
+          ?.map((m) => DrumEventMarker(color: m.color, semanticLabel: m.title))
+          .toList() ??
+      const [],
+);
+```
+
+Each `DrumEventMarker` may set its own `color` (falling back to the
+`eventMarkerColor` theme token) and a `semanticLabel` for accessibility. For
+full control over what a day draws, pass a `markerBuilder` and return your own
+widget (for example a count badge); return `null` to fall back to the dots. It
+receives the full marker list, so you can show the exact count even past the dot
+cap:
+
+```dart
+DrumCalendarDatePicker(
+  initialDate: _date,
+  firstDate: DateTime(2024, 1, 1),
+  lastDate: DateTime(2024, 12, 31),
+  onDateChanged: (d) => setState(() => _date = d),
+  eventLoader: _load,
+  markerBuilder: (context, day, markers) => Align(
+    // Sit below the number, where the default dots go, so the day stays legible.
+    alignment: Alignment.bottomCenter,
+    child: Container(
+      margin: const EdgeInsets.only(bottom: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.error,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        '${markers.length}',
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onError,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          height: 1,
+        ),
+      ),
+    ),
+  ),
+);
+```
+
+Markers work in every calendar mode surface: `DrumPicker`, `showDrumDatePicker`,
+and the `DrumCalendarDatePicker` drop-in, and compose with every calendar system
+(Gregorian, Hijri, Chinese, Jalali) and the working day and holiday rules.
 
 ## Installation
 
@@ -584,6 +662,82 @@ and English Hijri month names, while Umm al-Qura with an Arabic locale shows the
 Arabic month names and that locale's digits, flipping right to left exactly the
 way the Gregorian calendar does.
 
+## Date range and multiple dates
+
+Pick a contiguous **range** or any **set of individual days**, with the same
+rules as the single picker (calendars, working days, holidays, first day of
+week, theming). The range picker offers **two presentations the user can switch
+between** with a toggle: a Material 3 **calendar grid** and a **two-wheel drum**
+(a Start roller and an End roller).
+
+![date range as a calendar or a drum, and multiple selected days](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/range.png)
+
+Use `initialMode` (`DrumRangeMode.calendar` or `.drum`) to choose the first
+view, and `showModeToggle` to let the end user switch (default `true`); set it
+to `false` to lock one presentation:
+
+```dart
+DrumDateRangePicker(
+  firstDate: DateTime(2024, 1, 1),
+  lastDate: DateTime(2024, 12, 31),
+  initialMode: DrumRangeMode.drum, // open on the two-wheel drum
+  showModeToggle: true,            // ... but let the user switch to the grid
+  onChanged: (range) => setState(() => _range = range),
+);
+```
+
+### As a dialog
+
+`showDrumDateRangePicker` is a drop-in style replacement for Flutter's
+`showDateRangePicker` and returns a `DateTimeRange?`:
+
+```dart
+final range = await showDrumDateRangePicker(
+  context: context,
+  firstDate: DateTime(2024, 1, 1),
+  lastDate: DateTime(2024, 12, 31),
+  // Optional extras the built-in range picker lacks:
+  disabledWeekdays: const {DateTime.saturday, DateTime.sunday},
+  firstDayOfWeek: DateTime.monday,
+);
+if (range != null) {
+  print('${range.start} to ${range.end}');
+}
+
+// Multiple individual days -> List<DateTime>?
+final days = await showDrumMultiDatePicker(
+  context: context,
+  firstDate: DateTime(2024, 1, 1),
+  lastDate: DateTime(2024, 12, 31),
+);
+```
+
+### Inline (embedded in a form)
+
+`DrumDateRangePicker` and `DrumMultiDatePicker` are header-less inline calendars.
+Tap a start day then an end day for a range, or tap to toggle days for a set:
+
+```dart
+DrumDateRangePicker(
+  firstDate: DateTime(2024, 1, 1),
+  lastDate: DateTime(2024, 12, 31),
+  initialDateRange: DateTimeRange(
+    start: DateTime(2024, 6, 10),
+    end: DateTime(2024, 6, 18),
+  ),
+  onChanged: (range) {
+    // range is null until both ends are chosen
+    if (range != null) setState(() => _range = range);
+  },
+);
+
+DrumMultiDatePicker(
+  firstDate: DateTime(2024, 1, 1),
+  lastDate: DateTime(2024, 12, 31),
+  onChanged: (dates) => setState(() => _dates = dates), // sorted List<DateTime>
+);
+```
+
 ## Drop-in replacements
 
 This package mirrors the constructors and functions of Flutter's Material and
@@ -598,6 +752,7 @@ all optional.
 |---|---|---|
 | `showDatePicker(...)` | `showDrumDatePicker(...)` | modal, returns `DateTime?` |
 | `showTimePicker(...)` | `showDrumTimePicker(...)` | modal, returns `TimeOfDay?` |
+| `showDateRangePicker(...)` | `showDrumDateRangePicker(...)` | modal, returns `DateTimeRange?` |
 | `CalendarDatePicker(...)` | `DrumCalendarDatePicker(...)` | inline grid, `onDateChanged` |
 | `CupertinoDatePicker(...)` | `DrumCupertinoDatePicker(...)` | inline wheel, streaming `onDateTimeChanged` |
 
@@ -678,6 +833,8 @@ the development setup and the checks that run in CI, and note the
 - **v1.6** Chinese lunisolar calendar with leap month support.
 - **v1.8** Drop-in replacements for the Material and Cupertino pickers.
 - **v1.10** Persian Solar Hijri (Jalali) calendar system.
+- **v1.11** Date range and multiple date selection, and event markers in the
+  calendar grid.
 
 ## License
 

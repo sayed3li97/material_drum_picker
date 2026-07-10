@@ -4,6 +4,7 @@ import '../calendar/drum_calendar_system.dart';
 import '../models/drum_calendar_type.dart';
 import '../models/drum_column_order.dart';
 import '../models/drum_date_format.dart';
+import '../models/drum_event_marker.dart';
 import '../models/drum_month_format.dart';
 import '../models/drum_picker_labels.dart';
 import '../models/drum_picker_mode.dart';
@@ -46,6 +47,9 @@ Future<DateTime?> showDrumDatePicker({
   DrumDateFormat inputFormat = DrumDateFormat.mdy,
   bool showQuickSelects = true,
   List<DrumQuickSelect>? quickSelectOptions,
+  DrumEventLoader? eventLoader,
+  DrumMarkerBuilder? markerBuilder,
+  int maxEventMarkers = kDefaultMaxEventMarkers,
   DrumCalendarType calendar = DrumCalendarType.gregorian,
   DrumCalendarSystem? calendarSystem,
   bool showGregorianAlongside = false,
@@ -112,6 +116,9 @@ Future<DateTime?> showDrumDatePicker({
     inputFormat: inputFormat,
     showQuickSelects: showQuickSelects,
     quickSelectOptions: quickSelectOptions,
+    eventLoader: eventLoader,
+    markerBuilder: markerBuilder,
+    maxEventMarkers: maxEventMarkers,
     calendar: calendar,
     calendarSystem: calendarSystem,
     showGregorianAlongside: showGregorianAlongside,
@@ -179,6 +186,9 @@ class _DrumPickerDialog extends StatelessWidget {
     required this.inputFormat,
     required this.showQuickSelects,
     this.quickSelectOptions,
+    this.eventLoader,
+    this.markerBuilder,
+    required this.maxEventMarkers,
     required this.calendar,
     this.calendarSystem,
     required this.showGregorianAlongside,
@@ -215,6 +225,9 @@ class _DrumPickerDialog extends StatelessWidget {
   final DrumDateFormat inputFormat;
   final bool showQuickSelects;
   final List<DrumQuickSelect>? quickSelectOptions;
+  final DrumEventLoader? eventLoader;
+  final DrumMarkerBuilder? markerBuilder;
+  final int maxEventMarkers;
   final DrumCalendarType calendar;
   final DrumCalendarSystem? calendarSystem;
   final bool showGregorianAlongside;
@@ -259,6 +272,9 @@ class _DrumPickerDialog extends StatelessWidget {
             inputFormat: inputFormat,
             showQuickSelects: showQuickSelects,
             quickSelectOptions: quickSelectOptions,
+            eventLoader: eventLoader,
+            markerBuilder: markerBuilder,
+            maxEventMarkers: maxEventMarkers,
             calendar: calendar,
             calendarSystem: calendarSystem,
             showGregorianAlongside: showGregorianAlongside,

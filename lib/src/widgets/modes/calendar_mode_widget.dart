@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../calendar/calendar_date.dart';
 import '../../calendar/drum_calendar_system.dart';
+import '../../models/drum_event_marker.dart';
 import '../../theme/drum_picker_theme.dart';
 import '../../utils/drum_date_utils.dart';
 import '../../utils/drum_locale_utils.dart';
@@ -24,6 +25,9 @@ class CalendarModeWidget extends StatefulWidget {
     required this.onChanged,
     this.firstDayOfWeek,
     this.selectableDayPredicate,
+    this.eventLoader,
+    this.markerBuilder,
+    this.maxEventMarkers = kDefaultMaxEventMarkers,
   });
 
   /// The currently-selected date (canonical Gregorian value).
@@ -56,6 +60,15 @@ class CalendarModeWidget extends StatefulWidget {
 
   /// Optional predicate restricting selectable days.
   final bool Function(DateTime day)? selectableDayPredicate;
+
+  /// Returns the event markers for a given day, or null for no events.
+  final DrumEventLoader? eventLoader;
+
+  /// Optional builder that replaces the default marker dots.
+  final DrumMarkerBuilder? markerBuilder;
+
+  /// The maximum number of default marker dots rendered under a day.
+  final int maxEventMarkers;
 
   @override
   State<CalendarModeWidget> createState() => _CalendarModeWidgetState();
@@ -283,6 +296,8 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
     }
     for (var day = 1; day <= daysInMonth; day++) {
       final date = widget.system.encode(_year, _month, day);
+      final markers =
+          widget.eventLoader?.call(date) ?? const <DrumEventMarker>[];
       cells.add(DayCell(
         day: day,
         label: DrumNumerals.format(day, _localeName),
@@ -290,6 +305,10 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
         isSelected: DrumDateUtils.isSameDay(date, widget.selectedDate),
         isToday: DrumDateUtils.isSameDay(date, widget.currentDate),
         tokens: widget.tokens,
+        markers: markers,
+        markerBuilder: widget.markerBuilder,
+        markerDate: date,
+        maxMarkers: widget.maxEventMarkers,
         onTap: () => _selectDay(date),
       ));
     }

@@ -54,6 +54,7 @@ class DrumPickerTheme extends ThemeExtension<DrumPickerTheme> {
     this.selectedDayForegroundColor,
     this.todayColor,
     this.disabledDayColor,
+    this.eventMarkerColor,
     this.helpTextStyle,
     this.headlineTextStyle,
     this.secondaryTextStyle,
@@ -100,6 +101,10 @@ class DrumPickerTheme extends ThemeExtension<DrumPickerTheme> {
 
   /// Foreground color of a disabled (out of range or not selectable) day.
   final Color? disabledDayColor;
+
+  /// Default color of an event marker dot under a day in the calendar grid,
+  /// used when a `DrumEventMarker` does not specify its own color.
+  final Color? eventMarkerColor;
 
   /// Text style of the small uppercase help label above the headline.
   ///
@@ -153,6 +158,7 @@ class DrumPickerTheme extends ThemeExtension<DrumPickerTheme> {
     Color? selectedDayForegroundColor,
     Color? todayColor,
     Color? disabledDayColor,
+    Color? eventMarkerColor,
     TextStyle? helpTextStyle,
     TextStyle? headlineTextStyle,
     TextStyle? secondaryTextStyle,
@@ -180,6 +186,7 @@ class DrumPickerTheme extends ThemeExtension<DrumPickerTheme> {
           selectedDayForegroundColor ?? this.selectedDayForegroundColor,
       todayColor: todayColor ?? this.todayColor,
       disabledDayColor: disabledDayColor ?? this.disabledDayColor,
+      eventMarkerColor: eventMarkerColor ?? this.eventMarkerColor,
       helpTextStyle: helpTextStyle ?? this.helpTextStyle,
       headlineTextStyle: headlineTextStyle ?? this.headlineTextStyle,
       secondaryTextStyle: secondaryTextStyle ?? this.secondaryTextStyle,
@@ -216,6 +223,7 @@ class DrumPickerTheme extends ThemeExtension<DrumPickerTheme> {
           other.selectedDayForegroundColor ?? selectedDayForegroundColor,
       todayColor: other.todayColor ?? todayColor,
       disabledDayColor: other.disabledDayColor ?? disabledDayColor,
+      eventMarkerColor: other.eventMarkerColor ?? eventMarkerColor,
       helpTextStyle: other.helpTextStyle ?? helpTextStyle,
       headlineTextStyle: other.headlineTextStyle ?? headlineTextStyle,
       secondaryTextStyle: other.secondaryTextStyle ?? secondaryTextStyle,
@@ -255,6 +263,7 @@ class DrumPickerTheme extends ThemeExtension<DrumPickerTheme> {
           selectedDayForegroundColor, other.selectedDayForegroundColor, t),
       todayColor: Color.lerp(todayColor, other.todayColor, t),
       disabledDayColor: Color.lerp(disabledDayColor, other.disabledDayColor, t),
+      eventMarkerColor: Color.lerp(eventMarkerColor, other.eventMarkerColor, t),
       helpTextStyle: TextStyle.lerp(helpTextStyle, other.helpTextStyle, t),
       headlineTextStyle:
           TextStyle.lerp(headlineTextStyle, other.headlineTextStyle, t),
@@ -302,6 +311,7 @@ class DrumPickerTheme extends ThemeExtension<DrumPickerTheme> {
     final dayForegroundColor = ext.dayForegroundColor ?? scheme.onSurface;
     final disabledDayColor =
         ext.disabledDayColor ?? scheme.onSurface.withValues(alpha: 0.38);
+    final eventMarkerColor = ext.eventMarkerColor ?? scheme.tertiary;
 
     // Default text styles preserve the historic fixed sizing exactly. A non
     // null token is merged on top so a caller can tweak one field (for example
@@ -322,6 +332,7 @@ class DrumPickerTheme extends ThemeExtension<DrumPickerTheme> {
       selectedDayForegroundColor: selectedDayForegroundColor,
       todayColor: todayColor,
       disabledDayColor: disabledDayColor,
+      eventMarkerColor: eventMarkerColor,
       helpTextStyle: bake(
         TextStyle(
           color: headerTextColor,
@@ -403,6 +414,7 @@ class DrumPickerResolved {
     required this.selectedDayForegroundColor,
     required this.todayColor,
     required this.disabledDayColor,
+    required this.eventMarkerColor,
     required this.helpTextStyle,
     required this.headlineTextStyle,
     required this.timeHeadlineTextStyle,
@@ -449,6 +461,9 @@ class DrumPickerResolved {
 
   /// Foreground color of a disabled calendar day.
   final Color disabledDayColor;
+
+  /// Default color of an event marker dot under a calendar day.
+  final Color eventMarkerColor;
 
   /// Resolved text style of the help label.
   final TextStyle helpTextStyle;

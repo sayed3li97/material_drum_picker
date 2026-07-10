@@ -11,6 +11,7 @@ import '../calendar/jalali/jalali_calendar_system.dart';
 import '../models/drum_calendar_type.dart';
 import '../models/drum_column_order.dart';
 import '../models/drum_date_format.dart';
+import '../models/drum_event_marker.dart';
 import '../models/drum_month_format.dart';
 import '../models/drum_picker_labels.dart';
 import '../models/drum_picker_mode.dart';
@@ -60,6 +61,9 @@ class DrumPicker extends StatefulWidget {
     this.inputFormat = DrumDateFormat.mdy,
     this.showQuickSelects = true,
     this.quickSelectOptions,
+    this.eventLoader,
+    this.markerBuilder,
+    this.maxEventMarkers = kDefaultMaxEventMarkers,
     this.calendar = DrumCalendarType.gregorian,
     this.calendarSystem,
     this.showGregorianAlongside = false,
@@ -170,6 +174,28 @@ class DrumPicker extends StatefulWidget {
 
   /// Custom quick-select options. Replaces the defaults if provided.
   final List<DrumQuickSelect>? quickSelectOptions;
+
+  /// Returns the event markers to show under each day in calendar mode, turning
+  /// the grid into a lightweight event calendar. Called once per visible day
+  /// with its canonical Gregorian date; return an empty list for days with no
+  /// events. Null shows no markers (the default).
+  ///
+  /// ```dart
+  /// eventLoader: (day) =>
+  ///     myEventsByDay[DateUtils.dateOnly(day)]
+  ///         ?.map((e) => DrumEventMarker(color: e.color))
+  ///         .toList() ??
+  ///     const [],
+  /// ```
+  final DrumEventLoader? eventLoader;
+
+  /// Optional builder that replaces the default marker dots with your own
+  /// widget. Return null to fall back to the dots. Only used with [eventLoader].
+  final DrumMarkerBuilder? markerBuilder;
+
+  /// The maximum number of default marker dots rendered under a day. Defaults
+  /// to four. Ignored when [markerBuilder] draws its own markers.
+  final int maxEventMarkers;
 
   /// The built in calendar system to present dates in. Defaults to
   /// [DrumCalendarType.gregorian]. Ignored when [calendarSystem] is non null.
@@ -531,6 +557,9 @@ class _DrumPickerState extends State<DrumPicker> {
           tokens: tokens,
           firstDayOfWeek: widget.firstDayOfWeek,
           selectableDayPredicate: _isSelectableDay,
+          eventLoader: widget.eventLoader,
+          markerBuilder: widget.markerBuilder,
+          maxEventMarkers: widget.maxEventMarkers,
           onChanged: _onDateChanged,
         );
       case DrumPickerMode.input:

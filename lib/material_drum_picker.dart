@@ -5,11 +5,14 @@ library;
 
 // Models
 export 'src/models/drum_calendar_type.dart';
+export 'src/models/drum_event_marker.dart'
+    show DrumEventMarker, DrumEventLoader, DrumMarkerBuilder;
 export 'src/models/drum_column_order.dart';
 export 'src/models/drum_date_format.dart';
 export 'src/models/drum_month_format.dart';
 export 'src/models/drum_picker_labels.dart';
 export 'src/models/drum_picker_mode.dart';
+export 'src/models/drum_range_mode.dart';
 export 'src/models/drum_picker_value.dart';
 export 'src/models/drum_quick_select.dart';
 
@@ -44,4 +47,7 @@ export 'src/widgets/drum_picker.dart'
 export 'src/widgets/drum_picker_dialog.dart' show showDrumDatePicker;
 export 'src/widgets/drum_time_picker.dart'
     show DrumTimePicker, showDrumTimePicker;
-export 'src/widgets/drum_picker_range_dialog.dart' show showDrumDateRangePicker;
+export 'src/widgets/drum_picker_range_dialog.dart'
+    show showDrumDateRangePicker, showDrumMultiDatePicker;
+export 'src/widgets/range/drum_range_pickers.dart'
+    show DrumDateRangePicker, DrumMultiDatePicker;
