@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.12.1
+
+- Declare `screenshots` in `pubspec.yaml` so the drum, calendar, range, event
+  marker, calendar system, form field, and drop-in images render on the
+  package's pub.dev landing page. Documentation and metadata only; no code
+  changes.
+
 ## 1.12.0
 
 - **`DrumDateFormField`.** A `FormField<DateTime>` for date input inside a
