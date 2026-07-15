@@ -15,6 +15,7 @@ import 'screens/hijri_screen.dart';
 import 'screens/inline_form_screen.dart';
 import 'screens/jalali_screen.dart';
 import 'screens/localization_screen.dart';
+import 'screens/precision_screen.dart';
 import 'screens/range_screen.dart';
 import 'screens/rtl_screen.dart';
 import 'screens/scheduling_screen.dart';
@@ -67,6 +68,7 @@ class HomeScreen extends StatelessWidget {
     ('Chinese', 'Lunisolar calendar with leap months', _chinese),
     ('Persian', 'Jalali solar calendar in Persian', _jalali),
     ('Event markers', 'Dots under days with events', _events),
+    ('Month / year', 'Month and year precision', _precision),
     ('Form field', 'DrumDateFormField in a Form', _formField),
     ('Drop in', 'Cupertino and Calendar replacements', _dropin),
     ('Data backed', 'Committee calendar from a dataset', _dataBacked),
@@ -88,6 +90,7 @@ class HomeScreen extends StatelessWidget {
   static Widget _chinese(BuildContext c) => const ChineseScreen();
   static Widget _jalali(BuildContext c) => const JalaliScreen();
   static Widget _events(BuildContext c) => const EventsScreen();
+  static Widget _precision(BuildContext c) => const PrecisionScreen();
   static Widget _formField(BuildContext c) => const FormFieldScreen();
   static Widget _dropin(BuildContext c) => const DropinScreen();
   static Widget _dataBacked(BuildContext c) => const DataBackedCalendarScreen();

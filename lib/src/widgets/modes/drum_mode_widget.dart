@@ -5,11 +5,15 @@ import '../../calendar/drum_calendar_system.dart';
 import '../../models/drum_column_order.dart';
 import '../../models/drum_month_format.dart';
 import '../../models/drum_picker_labels.dart';
+import '../../models/drum_precision.dart';
 import '../../theme/drum_picker_theme.dart';
 import '../../utils/drum_date_utils.dart';
 import '../../utils/drum_locale_utils.dart';
 import '../../utils/drum_numerals.dart';
 import '../internal/drum_column.dart';
+
+/// Which drum column a slot renders, used to drop columns below day precision.
+enum _Col { day, month, year }
 
 /// The drum-wheel input mode: scrollable day/month/year columns, rendered in
 /// the active [system] calendar.
@@ -28,6 +32,7 @@ class DrumModeWidget extends StatefulWidget {
     required this.labels,
     required this.monthFormat,
     required this.onChanged,
+    this.precision = DrumPrecision.day,
     this.selectableDayPredicate,
   });
 
@@ -60,6 +65,10 @@ class DrumModeWidget extends StatefulWidget {
 
   /// Whether the month column shows the month name or its number.
   final DrumMonthFormat monthFormat;
+
+  /// The selection granularity. At [DrumPrecision.month] the day column is
+  /// hidden; at [DrumPrecision.year] the month and day columns are hidden.
+  final DrumPrecision precision;
 
   /// Called with the new date whenever a column settles.
   final ValueChanged<DateTime> onChanged;
@@ -223,16 +232,34 @@ class _DrumModeWidgetState extends State<DrumModeWidget> {
     );
   }
 
+  bool _isActive(_Col c) {
+    switch (widget.precision) {
+      case DrumPrecision.day:
+        return true;
+      case DrumPrecision.month:
+        return c != _Col.day;
+      case DrumPrecision.year:
+        return c == _Col.year;
+    }
+  }
+
   List<Widget> _orderedColumns() {
-    final dayCol = _buildDayColumn();
-    final monthCol = _buildMonthColumn();
-    final yearCol = _buildYearColumn();
-    return switch (widget.columnOrder) {
-      DrumColumnOrder.dmy => [dayCol, monthCol, yearCol],
-      DrumColumnOrder.mdy => [monthCol, dayCol, yearCol],
-      DrumColumnOrder.ymd => [yearCol, monthCol, dayCol],
-      DrumColumnOrder.ydm => [yearCol, dayCol, monthCol],
+    final order = switch (widget.columnOrder) {
+      DrumColumnOrder.dmy => const [_Col.day, _Col.month, _Col.year],
+      DrumColumnOrder.mdy => const [_Col.month, _Col.day, _Col.year],
+      DrumColumnOrder.ymd => const [_Col.year, _Col.month, _Col.day],
+      DrumColumnOrder.ydm => const [_Col.year, _Col.day, _Col.month],
     };
+    final columns = <Widget>[];
+    for (final c in order) {
+      if (!_isActive(c)) continue;
+      columns.add(switch (c) {
+        _Col.day => _buildDayColumn(),
+        _Col.month => _buildMonthColumn(),
+        _Col.year => _buildYearColumn(),
+      });
+    }
+    return columns;
   }
 
   @override

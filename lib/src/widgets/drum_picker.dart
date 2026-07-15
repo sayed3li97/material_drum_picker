@@ -15,6 +15,7 @@ import '../models/drum_event_marker.dart';
 import '../models/drum_month_format.dart';
 import '../models/drum_picker_labels.dart';
 import '../models/drum_picker_mode.dart';
+import '../models/drum_precision.dart';
 import '../models/drum_quick_select.dart';
 import '../theme/drum_picker_theme.dart';
 import '../utils/drum_date_utils.dart';
@@ -53,6 +54,7 @@ class DrumPicker extends StatefulWidget {
     this.holidays,
     this.firstDayOfWeek,
     this.initialMode = DrumPickerMode.drum,
+    this.precision = DrumPrecision.day,
     this.showModeToggle = true,
     this.showHeader = true,
     this.columnOrder,
@@ -95,7 +97,16 @@ class DrumPicker extends StatefulWidget {
             firstDayOfWeek == null ||
                 (firstDayOfWeek >= DateTime.monday &&
                     firstDayOfWeek <= DateTime.sunday),
-            'firstDayOfWeek must be 1 (Monday) to 7 (Sunday)');
+            'firstDayOfWeek must be 1 (Monday) to 7 (Sunday)'),
+        assert(precision == DrumPrecision.day || !pickTime,
+            'precision below day is not supported together with pickTime'),
+        assert(
+            precision == DrumPrecision.day ||
+                (selectableDayPredicate == null &&
+                    disabledWeekdays == null &&
+                    holidays == null),
+            'selectableDayPredicate, disabledWeekdays, and holidays have no '
+            'effect when precision is not day (there is no day to test)');
 
   /// The date initially selected when the picker opens.
   ///
@@ -141,6 +152,13 @@ class DrumPicker extends StatefulWidget {
 
   /// The input mode shown when the picker first opens.
   final DrumPickerMode initialMode;
+
+  /// The granularity of the selection: a full day (default), a month, or a
+  /// year. See [DrumPrecision]. Below [DrumPrecision.day] the returned value is
+  /// the first day of the selected period, clamped into range, and any
+  /// [selectableDayPredicate], [disabledWeekdays], or [holidays] no longer
+  /// apply (there is no day to test). Not supported together with [pickTime].
+  final DrumPrecision precision;
 
   /// Whether to show the mode toggle tabs.
   final bool showModeToggle;
@@ -348,7 +366,7 @@ class _DrumPickerState extends State<DrumPicker> {
         DrumDateUtils.snapMinute(initial.minute, widget.minuteInterval),
       );
     } else {
-      _selectedDate = clampedDate;
+      _selectedDate = _normalizeToPrecision(clampedDate);
     }
   }
 
@@ -360,6 +378,11 @@ class _DrumPickerState extends State<DrumPicker> {
     if (_holidays.contains(d)) return false;
     return widget.selectableDayPredicate?.call(day) ?? true;
   }
+
+  /// The per-day predicate handed to the modes. Day-level rules only apply at
+  /// day precision; below it there is no day to test, so it is null.
+  bool Function(DateTime)? get _dayPredicate =>
+      widget.precision == DrumPrecision.day ? _isSelectableDay : null;
 
   /// Returns [from] if it is in range and selectable, otherwise the closest
   /// in range selectable day, searching outward up to a year. Falls back to
@@ -382,6 +405,24 @@ class _DrumPickerState extends State<DrumPicker> {
     return start;
   }
 
+  /// Reduces [date] to the granularity of [DrumPicker.precision]: the first day
+  /// of the selected month or year (in the active calendar), clamped into
+  /// range. At [DrumPrecision.day] it just strips the time.
+  DateTime _normalizeToPrecision(DateTime date) {
+    final d = DrumDateUtils.dateOnly(date);
+    switch (widget.precision) {
+      case DrumPrecision.day:
+        return d;
+      case DrumPrecision.month:
+        final c = _system.decode(d);
+        return DrumDateUtils.clamp(
+            _system.encode(c.year, c.month, 1), _first, _last);
+      case DrumPrecision.year:
+        final c = _system.decode(d);
+        return DrumDateUtils.clamp(_system.encode(c.year, 1, 1), _first, _last);
+    }
+  }
+
   Locale? _effectiveLocale(BuildContext context) =>
       widget.locale ?? Localizations.maybeLocaleOf(context);
 
@@ -393,7 +434,7 @@ class _DrumPickerState extends State<DrumPicker> {
   void _onDateChanged(DateTime date) {
     final merged = widget.pickTime
         ? DrumDateUtils.combine(date, _selectedDate.hour, _selectedDate.minute)
-        : DrumDateUtils.dateOnly(date);
+        : _normalizeToPrecision(date);
     if (merged == _selectedDate) return;
     setState(() => _selectedDate = merged);
     widget.onChanged?.call(merged);
@@ -443,11 +484,20 @@ class _DrumPickerState extends State<DrumPicker> {
 
   /// The calendar and locale aware headline for the selected date.
   String _headline(Locale locale, String? localeName) {
+    final c = _system.decode(_selectedDate);
+    // Month and year precision drop the day (and weekday) from the headline.
+    if (widget.precision == DrumPrecision.year) {
+      return DrumNumerals.format(c.year, localeName);
+    }
+    if (widget.precision == DrumPrecision.month) {
+      final month = _system.monthLabel(c.year, c.month,
+          numeric: false, abbreviated: false, locale: locale);
+      return '$month ${DrumNumerals.format(c.year, localeName)}';
+    }
     if (_system is GregorianCalendarSystem) {
       // Keep the exact Gregorian formatting so existing output is unchanged.
       return DateFormat.MMMEd(localeName).format(_selectedDate);
     }
-    final c = _system.decode(_selectedDate);
     final weekday = DateFormat.E(localeName).format(_selectedDate);
     final month = _system.monthLabel(c.year, c.month,
         numeric: false, abbreviated: true, locale: locale);
@@ -512,7 +562,9 @@ class _DrumPickerState extends State<DrumPicker> {
             localeName: localeName,
             onChanged: _onTimeChanged,
           ),
-        if (_mode == DrumPickerMode.calendar && widget.showQuickSelects)
+        if (_mode == DrumPickerMode.calendar &&
+            widget.showQuickSelects &&
+            widget.precision == DrumPrecision.day)
           QuickChips(
             options: _resolveQuickSelects(),
             isEnabled: _isQuickSelectEnabled,
@@ -543,7 +595,8 @@ class _DrumPickerState extends State<DrumPicker> {
           locale: locale,
           labels: widget.labels,
           monthFormat: widget.monthFormat,
-          selectableDayPredicate: _isSelectableDay,
+          precision: widget.precision,
+          selectableDayPredicate: _dayPredicate,
           onChanged: _onDateChanged,
         );
       case DrumPickerMode.calendar:
@@ -556,7 +609,8 @@ class _DrumPickerState extends State<DrumPicker> {
           locale: locale,
           tokens: tokens,
           firstDayOfWeek: widget.firstDayOfWeek,
-          selectableDayPredicate: _isSelectableDay,
+          precision: widget.precision,
+          selectableDayPredicate: _dayPredicate,
           eventLoader: widget.eventLoader,
           markerBuilder: widget.markerBuilder,
           maxEventMarkers: widget.maxEventMarkers,
@@ -570,7 +624,8 @@ class _DrumPickerState extends State<DrumPicker> {
           system: _system,
           locale: locale,
           format: widget.inputFormat,
-          selectableDayPredicate: _isSelectableDay,
+          precision: widget.precision,
+          selectableDayPredicate: _dayPredicate,
           errorFormatText: widget.errorFormatText,
           errorInvalidText: widget.errorInvalidText,
           fieldHintText: widget.fieldHintText,
