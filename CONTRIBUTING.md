@@ -101,17 +101,29 @@ pub.dev one-time setup (required for any automated publish):
 - **pub.dev**: package Admin tab, enable automated publishing from GitHub
   Actions for `sayed3li97/material_drum_picker` with tag pattern `v{{version}}`.
 
-Then pick one of two publish paths:
+Then any of these publish paths works (they all authenticate with OIDC, so none
+needs pub.dev credentials in CI):
 
 - **Full automation (optional secret)**: add a repository secret `RELEASE_PAT`,
   a fine-grained personal access token with `Contents: read and write` on this
   repo. With it set, merging a version bump auto tags and publishes. The token
   is needed because tags pushed by the default `GITHUB_TOKEN` cannot trigger the
   publish workflow.
-- **No secret**: after merging the version bump, go to Releases, Draft a new
-  release, choose or create the tag `vX.Y.Z`, and publish it. A published
-  release triggers `Publish to pub.dev` directly. When `RELEASE_PAT` is absent
-  the merge workflow does not fail; it logs a warning and leaves tagging to you.
+- **From the Actions tab (no secret, no local SDK)**: the merge already created
+  the tag `vX.Y.Z`, so open the **Publish to pub.dev** workflow, choose **Run
+  workflow**, and select that **tag** (not a branch) as the ref. It publishes
+  the tagged version through OIDC. This is the simplest way to publish a version
+  whose tag already exists.
+- **Publish a GitHub Release (no secret)**: go to Releases, Draft a new release,
+  choose the tag `vX.Y.Z`, and publish it. A human published release triggers
+  `Publish to pub.dev` directly.
+- **By hand, locally**: `flutter pub publish` from a checkout of the tag (needs
+  the Flutter SDK and a pub.dev login).
+
+**Catching up an unpublished version.** If several merges have landed but pub.dev
+is behind, you do not need to republish each one: publish only the latest tag
+(newest `vX.Y.Z`) with any path above; a newer version supersedes the older
+ones on pub.dev.
 
 You can also cut a release by hand: `git tag v1.2.0 && git push origin v1.2.0`.
 

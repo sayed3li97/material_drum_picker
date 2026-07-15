@@ -9,14 +9,18 @@ name: Publish to pub.dev
 # v{{version}}.
 # See https://dart.dev/tools/pub/automated-publishing for details.
 #
-# Two ways to trigger this workflow:
+# Three ways to trigger this workflow:
 #   1. Push a tag vX.Y.Z. The "Release on merge to main" workflow does this
 #      automatically when a RELEASE_PAT secret is configured.
 #   2. Publish a GitHub Release whose tag is vX.Y.Z (Releases, Draft a new
 #      release). This path needs no secret, because a human published release
-#      can trigger workflows where the default GITHUB_TOKEN cannot. In both
-#      cases the run executes against the tag ref, which is what pub.dev's
-#      OIDC tag pattern check expects.
+#      can trigger workflows where the default GITHUB_TOKEN cannot.
+#   3. Run it by hand from the Actions tab (Run workflow) and pick an existing
+#      tag vX.Y.Z as the ref. Use this to publish a version whose tag already
+#      exists (for example a catch-up publish) without a PAT or a local SDK.
+# In every case the run executes against the tag ref, which is what pub.dev's
+# OIDC tag pattern check expects, so choose a tag ref (not a branch) for the
+# manual run.
 
 on:
   push:
@@ -24,6 +28,7 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+'
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   publish:
