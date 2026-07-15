@@ -2,7 +2,7 @@ name: material_drum_picker
 description: >-
   A Material 3 date picker with an iOS-style drum roller, full API parity with
   showDatePicker and CupertinoDatePicker, and drum, calendar and input modes.
-version: 1.12.0
+version: 1.12.1
 homepage: https://github.com/sayed3li97/material_drum_picker
 repository: https://github.com/sayed3li97/material_drum_picker
 issue_tracker: https://github.com/sayed3li97/material_drum_picker/issues
@@ -13,6 +13,37 @@ topics:
   - material-3
   - ui
   - widget
+
+screenshots:
+  - description: >-
+      Drum, calendar, and keyboard input date modes, a combined date and time
+      picker, and a dark theme.
+    path: doc/screenshots/showcase.png
+  - description: A combined date and time picker with an AM/PM column.
+    path: doc/screenshots/datetime.png
+  - description: >-
+      Date range selection with highlighted days, and multiple date selection.
+    path: doc/screenshots/range.png
+  - description: >-
+      Event markers: colored dots per day and a custom count badge, turning the
+      grid into a lightweight event calendar.
+    path: doc/screenshots/events.png
+  - description: >-
+      The Persian Solar Hijri (Jalali) calendar in a Persian right to left
+      layout.
+    path: doc/screenshots/jalali.png
+  - description: The Umm al-Qura Hijri calendar in an Arabic right to left layout.
+    path: doc/screenshots/hijri.png
+  - description: >-
+      The Chinese lunisolar calendar with leap months and sexagenary year names.
+    path: doc/screenshots/chinese.png
+  - description: DrumDateFormField integrated into a Form, with validation.
+    path: doc/screenshots/form_field.png
+  - description: >-
+      Drop-in replacements for the Material and Cupertino date pickers.
+    path: doc/screenshots/dropin.png
+  - description: Month as a name or number, and configurable typed date formats.
+    path: doc/screenshots/formats.png
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
