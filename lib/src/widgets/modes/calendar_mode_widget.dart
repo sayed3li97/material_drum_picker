@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../calendar/calendar_date.dart';
 import '../../calendar/drum_calendar_system.dart';
 import '../../models/drum_event_marker.dart';
+import '../../models/drum_precision.dart';
 import '../../theme/drum_picker_theme.dart';
 import '../../utils/drum_date_utils.dart';
 import '../../utils/drum_locale_utils.dart';
@@ -24,6 +25,7 @@ class CalendarModeWidget extends StatefulWidget {
     required this.tokens,
     required this.onChanged,
     this.firstDayOfWeek,
+    this.precision = DrumPrecision.day,
     this.selectableDayPredicate,
     this.eventLoader,
     this.markerBuilder,
@@ -54,6 +56,10 @@ class CalendarModeWidget extends StatefulWidget {
   /// Overrides the first day of the week (`DateTime.monday` == 1 to
   /// `DateTime.sunday` == 7). Null uses the locale default.
   final int? firstDayOfWeek;
+
+  /// The selection granularity. At [DrumPrecision.month] the grid is a month
+  /// chooser; at [DrumPrecision.year] it is a year chooser.
+  final DrumPrecision precision;
 
   /// Called with the new date when a day is tapped.
   final ValueChanged<DateTime> onChanged;
@@ -177,6 +183,8 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    // Arrow-key day navigation only makes sense at day precision.
+    if (widget.precision != DrumPrecision.day) return KeyEventResult.ignored;
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
@@ -212,24 +220,49 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildHeader(context),
-            if (_showYearGrid)
-              _buildYearGrid(context)
-            else ...[
-              _buildWeekdayRow(context),
-              _buildDayGrid(context),
-            ],
-          ],
+          children: _bodyChildren(context),
         ),
       ),
     );
   }
 
+  List<Widget> _bodyChildren(BuildContext context) {
+    switch (widget.precision) {
+      case DrumPrecision.year:
+        // The year chooser is the whole body; it scrolls the supported range.
+        return [_buildYearGrid(context)];
+      case DrumPrecision.month:
+        return [
+          _buildHeader(context),
+          if (_showYearGrid)
+            _buildYearGrid(context)
+          else
+            _buildMonthGrid(context),
+        ];
+      case DrumPrecision.day:
+        return [
+          _buildHeader(context),
+          if (_showYearGrid)
+            _buildYearGrid(context)
+          else ...[
+            _buildWeekdayRow(context),
+            _buildDayGrid(context),
+          ],
+        ];
+    }
+  }
+
   Widget _buildHeader(BuildContext context) {
-    final monthName = widget.system.monthLabel(_year, _month,
-        numeric: false, abbreviated: false, locale: widget.locale);
-    final label = '$monthName ${DrumNumerals.format(_year, _localeName)}';
+    // At month precision the header shows just the year and steps by year; at
+    // day precision it shows the month and year and steps by month.
+    final byMonth = widget.precision == DrumPrecision.day;
+    final label = byMonth
+        ? '${widget.system.monthLabel(_year, _month, numeric: false, abbreviated: false, locale: widget.locale)} '
+            '${DrumNumerals.format(_year, _localeName)}'
+        : DrumNumerals.format(_year, _localeName);
+    final localizations = MaterialLocalizations.of(context);
+    final canPrev = byMonth ? _canGoPrev : _canGoPrevYear;
+    final canNext = byMonth ? _canGoNext : _canGoNextYear;
     return Row(
       children: [
         TextButton.icon(
@@ -241,17 +274,99 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
         const Spacer(),
         if (!_showYearGrid) ...[
           IconButton(
-            tooltip: MaterialLocalizations.of(context).previousMonthTooltip,
-            onPressed: _canGoPrev ? () => _changeMonth(-1) : null,
+            tooltip: localizations.previousMonthTooltip,
+            onPressed: canPrev
+                ? () => byMonth ? _changeMonth(-1) : _changeYear(-1)
+                : null,
             icon: const Icon(Icons.chevron_left),
           ),
           IconButton(
-            tooltip: MaterialLocalizations.of(context).nextMonthTooltip,
-            onPressed: _canGoNext ? () => _changeMonth(1) : null,
+            tooltip: localizations.nextMonthTooltip,
+            onPressed: canNext
+                ? () => byMonth ? _changeMonth(1) : _changeYear(1)
+                : null,
             icon: const Icon(Icons.chevron_right),
           ),
         ],
       ],
+    );
+  }
+
+  bool get _canGoPrevYear => _year > _firstYm.year;
+  bool get _canGoNextYear => _year < _lastYm.year;
+
+  void _changeYear(int delta) {
+    final y = (_year + delta).clamp(_firstYm.year, _lastYm.year);
+    setState(() {
+      _year = y;
+      _month = _month.clamp(1, widget.system.monthsInYear(y));
+    });
+  }
+
+  /// Whether month [month] of [year] overlaps the selectable range at all, so a
+  /// mid-month firstDate/lastDate still leaves that boundary month selectable.
+  bool _monthInRange(int year, int month) {
+    final start = widget.system.encode(year, month, 1);
+    final end = widget.system
+        .encode(year, month, widget.system.daysInMonth(year, month));
+    return !end.isBefore(widget.firstDate) && !start.isAfter(widget.lastDate);
+  }
+
+  Widget _buildMonthGrid(BuildContext context) {
+    final months = widget.system.monthsInYear(_year);
+    return GridView.count(
+      crossAxisCount: 3,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      childAspectRatio: 2.2,
+      children: [
+        for (var m = 1; m <= months; m++) _buildMonthTile(context, m),
+      ],
+    );
+  }
+
+  Widget _buildMonthTile(BuildContext context, int month) {
+    final tokens = widget.tokens;
+    final selected = widget.system.decode(widget.selectedDate);
+    final today = widget.system.decode(widget.currentDate);
+    final isSelected = selected.year == _year && selected.month == month;
+    final isToday = today.year == _year && today.month == month;
+    final isEnabled = _monthInRange(_year, month);
+    final label = widget.system.monthLabel(_year, month,
+        numeric: false, abbreviated: true, locale: widget.locale);
+    Color foreground = tokens.dayForegroundColor;
+    if (isSelected) {
+      foreground = tokens.selectedDayForegroundColor;
+    } else if (!isEnabled) {
+      foreground = tokens.disabledDayColor;
+    } else if (isToday) {
+      foreground = tokens.todayColor;
+    }
+    return Padding(
+      padding: const EdgeInsets.all(4),
+      child: Material(
+        color:
+            isSelected ? tokens.selectedDayBackgroundColor : Colors.transparent,
+        shape: isToday && !isSelected
+            ? const StadiumBorder()
+                .copyWith(side: BorderSide(color: tokens.todayColor))
+            : const StadiumBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: isEnabled
+              ? () => widget.onChanged(widget.system.encode(_year, month, 1))
+              : null,
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: foreground,
+                fontWeight: isSelected || isToday ? FontWeight.w600 : null,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -340,21 +455,34 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
 
   Widget _buildYearTile(BuildContext context, int year) {
     final tokens = widget.tokens;
-    final isSelected = year == _year;
+    // At year precision the grid IS the selection, so it highlights the actual
+    // selected year and a tap commits; otherwise it only navigates.
+    final yearPrecision = widget.precision == DrumPrecision.year;
+    final isSelected = yearPrecision
+        ? widget.system.decode(widget.selectedDate).year == year
+        : year == _year;
+    final isToday =
+        yearPrecision && widget.system.decode(widget.currentDate).year == year;
     return Padding(
       padding: const EdgeInsets.all(4),
       child: Material(
         color:
             isSelected ? tokens.selectedDayBackgroundColor : Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
+        shape: isToday && !isSelected
+            ? StadiumBorder(side: BorderSide(color: tokens.todayColor))
+            : const StadiumBorder(),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
-          borderRadius: BorderRadius.circular(20),
           onTap: () {
-            setState(() {
-              _year = year;
-              _month = _month.clamp(1, widget.system.monthsInYear(year));
-              _showYearGrid = false;
-            });
+            if (yearPrecision) {
+              widget.onChanged(widget.system.encode(year, 1, 1));
+            } else {
+              setState(() {
+                _year = year;
+                _month = _month.clamp(1, widget.system.monthsInYear(year));
+                _showYearGrid = false;
+              });
+            }
           },
           child: Center(
             child: Text(
@@ -362,8 +490,10 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
               style: TextStyle(
                 color: isSelected
                     ? tokens.selectedDayForegroundColor
-                    : tokens.dayForegroundColor,
-                fontWeight: isSelected ? FontWeight.w600 : null,
+                    : isToday
+                        ? tokens.todayColor
+                        : tokens.dayForegroundColor,
+                fontWeight: isSelected || isToday ? FontWeight.w600 : null,
               ),
             ),
           ),

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../calendar/drum_calendar_system.dart';
 import '../../models/drum_date_format.dart';
+import '../../models/drum_precision.dart';
 import '../../utils/drum_date_utils.dart';
 import '../../utils/drum_locale_utils.dart';
 import '../../utils/drum_numerals.dart';
@@ -23,6 +24,7 @@ class InputModeWidget extends StatefulWidget {
     required this.locale,
     required this.format,
     required this.onChanged,
+    this.precision = DrumPrecision.day,
     this.selectableDayPredicate,
     this.errorFormatText,
     this.errorInvalidText,
@@ -48,6 +50,10 @@ class InputModeWidget extends StatefulWidget {
 
   /// The field order, separator, and year width for formatting and parsing.
   final DrumDateFormat format;
+
+  /// The selection granularity. At [DrumPrecision.month] the field is `MM/yyyy`
+  /// (day dropped); at [DrumPrecision.year] it is `yyyy`.
+  final DrumPrecision precision;
 
   /// Called with the new date when valid text is entered.
   final ValueChanged<DateTime> onChanged;
@@ -82,6 +88,38 @@ class _InputModeWidgetState extends State<InputModeWidget> {
 
   String? get _localeName => DrumLocaleUtils.toIntlLocale(widget.locale);
 
+  /// The fields the text field shows and parses, narrowed by precision: all
+  /// three at day precision, month and year (in the format's order) at month
+  /// precision, and the year alone at year precision.
+  List<DrumDateField> get _activeFields {
+    switch (widget.precision) {
+      case DrumPrecision.day:
+        return widget.format.order;
+      case DrumPrecision.month:
+        return widget.format.order
+            .where((f) => f != DrumDateField.day)
+            .toList();
+      case DrumPrecision.year:
+        return const [DrumDateField.year];
+    }
+  }
+
+  /// The hint pattern for the active fields, for example `MM/YYYY` or `YYYY`.
+  String get _hintPattern {
+    String token(DrumDateField field) {
+      switch (field) {
+        case DrumDateField.day:
+          return 'DD';
+        case DrumDateField.month:
+          return 'MM';
+        case DrumDateField.year:
+          return widget.format.twoDigitYear ? 'YY' : 'YYYY';
+      }
+    }
+
+    return _activeFields.map(token).join(widget.format.separator);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -111,7 +149,7 @@ class _InputModeWidgetState extends State<InputModeWidget> {
       }
     }
 
-    return widget.format.order.map(fieldText).join(widget.format.separator);
+    return _activeFields.map(fieldText).join(widget.format.separator);
   }
 
   /// Maps Eastern Arabic-Indic and Persian digits to ASCII so typed localized
@@ -130,17 +168,21 @@ class _InputModeWidgetState extends State<InputModeWidget> {
     return buffer.toString();
   }
 
-  /// Splits [text] into exactly three parts, preferring the configured
-  /// separator but falling back to any run of non-digits.
+  /// Splits [text] into exactly [_activeFields].length parts, preferring the
+  /// configured separator but falling back to any run of non-digits.
   List<String>? _split(String text) {
     final normalized = _normalizeDigits(text);
+    final expected = _activeFields.length;
+    if (expected == 1) {
+      return normalized.isEmpty ? null : [normalized];
+    }
     if (widget.format.separator.isNotEmpty) {
       final bySeparator = normalized.split(widget.format.separator);
-      if (bySeparator.length == 3) return bySeparator;
+      if (bySeparator.length == expected) return bySeparator;
     }
     final byNonDigit =
         normalized.split(RegExp(r'\D+')).where((s) => s.isNotEmpty).toList();
-    if (byNonDigit.length == 3) return byNonDigit;
+    if (byNonDigit.length == expected) return byNonDigit;
     return null;
   }
 
@@ -167,13 +209,15 @@ class _InputModeWidgetState extends State<InputModeWidget> {
   DateTime? _parse(String text) {
     final parts = _split(text);
     if (parts == null) return null;
-    int? day;
-    int? month;
+    // Day and month default to 1 when the precision drops them.
+    var day = 1;
+    var month = 1;
     int? year;
-    for (var i = 0; i < 3; i++) {
+    final fields = _activeFields;
+    for (var i = 0; i < fields.length; i++) {
       final value = int.tryParse(parts[i]);
       if (value == null) return null;
-      switch (widget.format.order[i]) {
+      switch (fields[i]) {
         case DrumDateField.day:
           day = value;
         case DrumDateField.month:
@@ -182,22 +226,44 @@ class _InputModeWidgetState extends State<InputModeWidget> {
           year = value;
       }
     }
-    final resolvedYear = _resolveYear(year!);
-    if (!widget.system.isValid(resolvedYear, month!, day!)) return null;
+    if (year == null) return null;
+    final resolvedYear = _resolveYear(year);
+    if (!widget.system.isValid(resolvedYear, month, day)) return null;
     return widget.system.encode(resolvedYear, month, day);
+  }
+
+  /// Whether [date] falls within the selectable range at the active precision.
+  /// Below day precision a partially-overlapping boundary month or year still
+  /// counts, so a mid-month firstDate does not exclude that month.
+  bool _inRange(DateTime date) {
+    switch (widget.precision) {
+      case DrumPrecision.day:
+        return DrumDateUtils.isInRange(date, widget.firstDate, widget.lastDate);
+      case DrumPrecision.month:
+        final c = widget.system.decode(date);
+        final start = widget.system.encode(c.year, c.month, 1);
+        final end = widget.system.encode(
+            c.year, c.month, widget.system.daysInMonth(c.year, c.month));
+        return !end.isBefore(widget.firstDate) &&
+            !start.isAfter(widget.lastDate);
+      case DrumPrecision.year:
+        final year = widget.system.decode(date).year;
+        return year >= widget.system.decode(widget.firstDate).year &&
+            year <= widget.system.decode(widget.lastDate).year;
+    }
   }
 
   void _onChanged(String text) {
     final date = _parse(text);
     if (date == null) {
       setState(() {
-        _errorText = widget.errorFormatText ??
-            'Invalid format. Use ${widget.format.displayPattern}';
+        _errorText =
+            widget.errorFormatText ?? 'Invalid format. Use $_hintPattern';
         _helperText = null;
       });
       return;
     }
-    if (!DrumDateUtils.isInRange(date, widget.firstDate, widget.lastDate)) {
+    if (!_inRange(date)) {
       setState(() {
         _errorText = widget.errorInvalidText ?? 'Out of range';
         _helperText = null;
@@ -220,12 +286,19 @@ class _InputModeWidgetState extends State<InputModeWidget> {
 
   String _preview(DateTime date) {
     final c = widget.system.decode(date);
-    final weekday = DateFormat.EEEE(_localeName).format(date);
     final month = widget.system.monthLabel(c.year, c.month,
         numeric: false, abbreviated: false, locale: widget.locale);
-    final day = DrumNumerals.format(c.day, _localeName);
     final year = DrumNumerals.format(c.year, _localeName);
-    return '$weekday, $month $day, $year';
+    switch (widget.precision) {
+      case DrumPrecision.year:
+        return year;
+      case DrumPrecision.month:
+        return '$month $year';
+      case DrumPrecision.day:
+        final weekday = DateFormat.EEEE(_localeName).format(date);
+        final day = DrumNumerals.format(c.day, _localeName);
+        return '$weekday, $month $day, $year';
+    }
   }
 
   /// Escapes the characters that are special inside a regular expression
@@ -237,8 +310,11 @@ class _InputModeWidgetState extends State<InputModeWidget> {
   Widget build(BuildContext context) {
     final separator = _escapeForCharClass(widget.format.separator);
     final allow = RegExp('[0-9٠-٩۰-۹$separator]');
+    final fields = _activeFields;
+    final digitCount = fields.fold<int>(0,
+        (n, f) => n + (f == DrumDateField.year ? widget.format.yearDigits : 2));
     final maxLength =
-        2 + 2 + widget.format.yearDigits + 2 * widget.format.separator.length;
+        digitCount + (fields.length - 1) * widget.format.separator.length;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
@@ -254,7 +330,7 @@ class _InputModeWidgetState extends State<InputModeWidget> {
                 const InputDecoration(border: OutlineInputBorder()))
             .copyWith(
           labelText: widget.fieldLabelText ?? 'Enter Date',
-          hintText: widget.fieldHintText ?? widget.format.displayPattern,
+          hintText: widget.fieldHintText ?? _hintPattern,
           errorText: _errorText,
           helperText: _helperText,
           suffixIcon: const Icon(Icons.edit_calendar_outlined),

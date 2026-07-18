@@ -12,6 +12,7 @@ export 'src/models/drum_date_format.dart';
 export 'src/models/drum_month_format.dart';
 export 'src/models/drum_picker_labels.dart';
 export 'src/models/drum_picker_mode.dart';
+export 'src/models/drum_precision.dart';
 export 'src/models/drum_range_mode.dart';
 export 'src/models/drum_picker_value.dart';
 export 'src/models/drum_quick_select.dart';

@@ -47,6 +47,9 @@ the **Showcase** screen.
 - **Event markers.** Pass an `eventLoader` to show dots (or your own
   `markerBuilder` widget) under the days that have events, turning the calendar
   grid into a lightweight event calendar.
+- **Month and year precision.** Set `precision: DrumPrecision.month` (or
+  `.year`) to pick a month or a year instead of a day, in every mode, for card
+  expiry, subscriptions, birth year, and the like.
 - **Pluggable data backed calendars.** Drive the picker from a published
   dataset of month start dates (for an official or committee lunar calendar)
   with `TabularLunarCalendarSystem`, passed through `calendarSystem`.
@@ -289,6 +292,36 @@ DrumCalendarDatePicker(
 Markers work in every calendar mode surface: `DrumPicker`, `showDrumDatePicker`,
 and the `DrumCalendarDatePicker` drop-in, and compose with every calendar system
 (Gregorian, Hijri, Chinese, Jalali) and the working day and holiday rules.
+
+### Month and year precision
+
+Set `precision` to select a month or a year instead of a full day, for the many
+cases where a day is wrong: a card expiry (`month`), a subscription or statement
+period (`month`), or a birth year (`year`). Every mode narrows to match: the
+drum drops its day (and month) columns, the calendar becomes a month or year
+chooser, and the keyboard field becomes `MM/yyyy` or `yyyy`.
+
+![Month and year precision on the drum and the calendar](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/precision.png)
+
+```dart
+// A credit-card expiry month/year picker.
+final expiry = await showDrumDatePicker(
+  context: context,
+  firstDate: DateTime(2020),
+  lastDate: DateTime(2035, 12),
+  precision: DrumPrecision.month,
+);
+// expiry is the first day of the chosen month, e.g. DateTime(2027, 4, 1).
+```
+
+The value is always a Gregorian `DateTime`, normalized to the first day of the
+selected period and clamped into `firstDate`..`lastDate` (a mid-month
+`firstDate` still leaves that month selectable). It works with every calendar
+system, so a Hijri, Chinese, or Jalali month or year picker comes for free, and
+it is available on `DrumPicker`, `showDrumDatePicker`, the `DrumCalendarDatePicker`
+drop-in, and `DrumDateFormField`. Below day precision the day level rules
+(`selectableDayPredicate`, `disabledWeekdays`, `holidays`) and `pickTime` do not
+apply.
 
 ## Installation
 
@@ -884,6 +917,7 @@ the development setup and the checks that run in CI, and note the
 - **v1.11** Date range and multiple date selection, and event markers in the
   calendar grid.
 - **v1.12** `DrumDateFormField` for `Form` integration.
+- **v1.13** Month and year precision (`DrumPrecision`).
 
 ## License
 

@@ -11,6 +11,7 @@ import '../models/drum_date_format.dart';
 import '../models/drum_month_format.dart';
 import '../models/drum_picker_labels.dart';
 import '../models/drum_picker_mode.dart';
+import '../models/drum_precision.dart';
 import '../theme/drum_picker_theme.dart';
 import '../utils/drum_locale_utils.dart';
 import '../utils/drum_numerals.dart';
@@ -57,6 +58,7 @@ class DrumDateFormField extends FormField<DateTime> {
     this.currentDate,
     this.calendar = DrumCalendarType.gregorian,
     this.calendarSystem,
+    this.precision = DrumPrecision.day,
     this.decoration = const InputDecoration(),
     this.formatValue,
     this.hintText,
@@ -133,6 +135,12 @@ class DrumDateFormField extends FormField<DateTime> {
 
   /// A custom calendar system, taking precedence over [calendar].
   final DrumCalendarSystem? calendarSystem;
+
+  /// The selection granularity: a full day (default), a month, or a year. At
+  /// month or year precision the picker becomes a month or year picker and the
+  /// stored value is the first day of the selected period. The display also
+  /// narrows (for example `March 2024` or `2024`) unless [formatValue] is set.
+  final DrumPrecision precision;
 
   /// The decoration around the field. The error text and a default calendar
   /// suffix icon are filled in automatically.
@@ -214,11 +222,13 @@ class _DrumDateFormFieldState extends FormFieldState<DateTime> {
         DrumCalendarType.gregorian => const GregorianCalendarSystem(),
       };
 
-  // A calendar and locale aware "Month day, year", using the active system's
-  // names and the locale's digits.
+  // A calendar and locale aware label, narrowed to the field's precision:
+  // "Month day, year", "Month year", or "year".
   String _defaultFormat(DateTime value) {
     final localeName = DrumLocaleUtils.toIntlLocale(_field.locale);
     final c = _system.decode(value);
+    final year = DrumNumerals.format(c.year, localeName);
+    if (_field.precision == DrumPrecision.year) return year;
     final month = _system.monthLabel(
       c.year,
       c.month,
@@ -226,8 +236,8 @@ class _DrumDateFormFieldState extends FormFieldState<DateTime> {
       abbreviated: false,
       locale: _field.locale ?? const Locale('en'),
     );
+    if (_field.precision == DrumPrecision.month) return '$month $year';
     final day = DrumNumerals.format(c.day, localeName);
-    final year = DrumNumerals.format(c.year, localeName);
     return '$month $day, $year';
   }
 
@@ -240,6 +250,7 @@ class _DrumDateFormFieldState extends FormFieldState<DateTime> {
       currentDate: _field.currentDate,
       calendar: _field.calendar,
       calendarSystem: _field.calendarSystem,
+      precision: _field.precision,
       initialMode: _field.initialPickerMode,
       initialEntryMode: _field.initialEntryMode,
       columnOrder: _field.columnOrder,

@@ -8,6 +8,7 @@ import '../models/drum_event_marker.dart';
 import '../models/drum_month_format.dart';
 import '../models/drum_picker_labels.dart';
 import '../models/drum_picker_mode.dart';
+import '../models/drum_precision.dart';
 import '../models/drum_quick_select.dart';
 import '../theme/drum_picker_theme.dart';
 import 'drum_picker.dart';
@@ -40,6 +41,7 @@ Future<DateTime?> showDrumDatePicker({
   int? firstDayOfWeek,
   DrumPickerMode initialMode = DrumPickerMode.drum,
   DatePickerEntryMode? initialEntryMode,
+  DrumPrecision precision = DrumPrecision.day,
   bool showModeToggle = true,
   DrumColumnOrder? columnOrder,
   bool showDayOfWeekInDrum = false,
@@ -109,6 +111,7 @@ Future<DateTime?> showDrumDatePicker({
     holidays: holidays,
     firstDayOfWeek: firstDayOfWeek,
     initialMode: effectiveMode,
+    precision: precision,
     showModeToggle: effectiveShowToggle,
     columnOrder: columnOrder,
     showDayOfWeekInDrum: showDayOfWeekInDrum,
@@ -179,6 +182,7 @@ class _DrumPickerDialog extends StatelessWidget {
     this.holidays,
     this.firstDayOfWeek,
     required this.initialMode,
+    required this.precision,
     required this.showModeToggle,
     this.columnOrder,
     required this.showDayOfWeekInDrum,
@@ -218,6 +222,7 @@ class _DrumPickerDialog extends StatelessWidget {
   final Set<DateTime>? holidays;
   final int? firstDayOfWeek;
   final DrumPickerMode initialMode;
+  final DrumPrecision precision;
   final bool showModeToggle;
   final DrumColumnOrder? columnOrder;
   final bool showDayOfWeekInDrum;
@@ -265,6 +270,7 @@ class _DrumPickerDialog extends StatelessWidget {
             holidays: holidays,
             firstDayOfWeek: firstDayOfWeek,
             initialMode: initialMode,
+            precision: precision,
             showModeToggle: showModeToggle,
             columnOrder: columnOrder,
             showDayOfWeekInDrum: showDayOfWeekInDrum,

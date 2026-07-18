@@ -4,6 +4,7 @@ import '../calendar/drum_calendar_system.dart';
 import '../models/drum_calendar_type.dart';
 import '../models/drum_event_marker.dart';
 import '../models/drum_picker_mode.dart';
+import '../models/drum_precision.dart';
 import '../theme/drum_picker_theme.dart';
 import '../widgets/drum_picker.dart';
 
@@ -59,6 +60,7 @@ class DrumCalendarDatePicker extends StatelessWidget {
     this.eventLoader,
     this.markerBuilder,
     this.maxEventMarkers = kDefaultMaxEventMarkers,
+    this.precision = DrumPrecision.day,
     this.theme,
     this.locale,
   });
@@ -114,6 +116,11 @@ class DrumCalendarDatePicker extends StatelessWidget {
   /// The maximum number of default marker dots per day. Defaults to four.
   final int maxEventMarkers;
 
+  /// The selection granularity: a full day (default), a month, or a year. At
+  /// month or year precision the grid becomes a month or year chooser and the
+  /// reported value is the first day of the selected period.
+  final DrumPrecision precision;
+
   /// Per instance visual token overrides.
   final DrumPickerTheme? theme;
 
@@ -141,6 +148,7 @@ class DrumCalendarDatePicker extends StatelessWidget {
       eventLoader: eventLoader,
       markerBuilder: markerBuilder,
       maxEventMarkers: maxEventMarkers,
+      precision: precision,
       theme: theme,
       locale: locale,
       onChanged: (date) {

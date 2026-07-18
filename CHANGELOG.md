@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.13.0
+
+- **Month and year precision.** New `precision` parameter (`DrumPrecision.day`,
+  `.month`, or `.year`) narrows the whole picker to select a month or a year
+  instead of a full day, for card expiry, subscriptions, birth year, and
+  similar cases.
+  - Every mode adapts: the drum drops its day (and month) columns, the calendar
+    becomes a month or year chooser, the keyboard field becomes `MM/yyyy` or
+    `yyyy`, and the headline shortens accordingly.
+  - The returned value is always a Gregorian `DateTime`, normalized to the first
+    day of the selected period and clamped into `firstDate`..`lastDate` (a
+    mid-month `firstDate` still leaves that month selectable).
+  - Works with every calendar system, so a Hijri, Chinese (including 13-month
+    leap years), or Jalali month or year picker comes for free.
+  - Available on `DrumPicker`, `showDrumDatePicker`, the `DrumCalendarDatePicker`
+    drop-in, and `DrumDateFormField`. Below day precision the day level rules
+    (`selectableDayPredicate`, `disabledWeekdays`, `holidays`) and `pickTime` do
+    not apply (asserted in debug).
+- New `DrumPrecision` enum, exported from the package.
+
 ## 1.12.1
 
 - Declare `screenshots` in `pubspec.yaml` so the drum, calendar, range, event
