@@ -551,7 +551,17 @@ class _DrumPickerState extends State<DrumPicker> {
             labels: widget.labels,
             onModeChanged: _onModeChanged,
           ),
-        _buildBody(tokens, locale),
+        AnimatedSwitcher(
+          duration: (MediaQuery.maybeOf(context)?.disableAnimations ?? false)
+              ? Duration.zero
+              : tokens.motionDuration,
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeOutCubic,
+          child: KeyedSubtree(
+            key: ValueKey(_mode),
+            child: _buildBody(tokens, locale),
+          ),
+        ),
         if (widget.pickTime)
           TimeStrip(
             time: TimeOfDay.fromDateTime(_selectedDate),

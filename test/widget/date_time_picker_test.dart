@@ -78,9 +78,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final minuteCol = tester.widget<DrumColumn>(
-      find.byWidgetPredicate(
-        (w) => w is DrumColumn && w.label == 'MIN',
-      ),
+      find.byKey(const ValueKey('time-minute')),
     );
     expect(minuteCol.itemCount, 4); // 0, 15, 30, 45
   });

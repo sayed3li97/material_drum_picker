@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.14.0
+
+- **Premium visual refresh.** A polished default look across the drum and the
+  calendar, tuned against premium fintech UI. No public API is removed; only the
+  default appearance changes, and everything stays overridable through
+  `DrumPickerTheme`.
+  - The drum now draws a single continuous, magnified selection band across all
+    columns (replacing the blocky per column pill), with a depth-of-field
+    opacity falloff on the off center rows and a subtle hairline outline.
+  - The drum day column's weekday sub-line no longer clips against the band.
+  - Numbers use tabular figures everywhere, so digits no longer jitter sideways
+    while the wheel scrolls or the headline changes.
+  - The calendar's selected day animates its fill and lifts with a soft shadow,
+    the "today" ring is crisper, and switching modes cross-fades. All motion
+    respects the platform reduce-motion setting.
+  - A tuned type scale (headline weight and tracking, small-caps column labels),
+    a hairline under the header, and roomier drum items.
+- New resolved tokens on `DrumPickerResolved`: `useMagnifier`, `magnification`,
+  `overAndUnderCenterOpacity`, `selectorBandBorderColor`, `selectedDayShadowColor`,
+  `dayTextStyle`, `daySubLabelTextStyle`, `weekdayLabelTextStyle`,
+  `rangeHighlightColor`, `rangeFillOpacity`, `headerBottomBorderColor`,
+  `selectionAnimationDuration`, and `motionDuration`. The default `itemExtent` is
+  now 52 and the default selection band is a quiet neutral fill.
+
 ## 1.13.0
 
 - **Month and year precision.** New `precision` parameter (`DrumPrecision.day`,

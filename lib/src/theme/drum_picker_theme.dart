@@ -1,4 +1,4 @@
-import 'dart:ui' show lerpDouble;
+import 'dart:ui' show FontFeature, lerpDouble;
 
 import 'package:flutter/material.dart';
 
@@ -313,32 +313,49 @@ class DrumPickerTheme extends ThemeExtension<DrumPickerTheme> {
         ext.disabledDayColor ?? scheme.onSurface.withValues(alpha: 0.38);
     final eventMarkerColor = ext.eventMarkerColor ?? scheme.tertiary;
 
-    // Default text styles preserve the historic fixed sizing exactly. A non
-    // null token is merged on top so a caller can tweak one field (for example
-    // weight) without losing the themed color.
+    // Default text styles carry the premium refinements (tabular figures,
+    // tuned weight and tracking). A non null token is merged on top so a caller
+    // can tweak one field (for example weight) without losing the rest.
     TextStyle bake(TextStyle base, TextStyle? override) =>
         override == null ? base : base.merge(override);
+
+    // Tabular figures keep digit advance widths constant, so numbers do not
+    // jitter horizontally while the drum scrolls or the headline changes.
+    const tnum = <FontFeature>[FontFeature.tabularFigures()];
 
     return DrumPickerResolved(
       headerBackgroundColor: headerBackgroundColor,
       headerTextColor: headerTextColor,
       cardBackgroundColor: ext.cardBackgroundColor ?? scheme.surface,
-      selectorBandColor: ext.selectorBandColor ??
-          scheme.primaryContainer.withValues(alpha: 0.5),
+      // A single quiet, neutral selection band reads more premium than a loud
+      // per column pill.
+      selectorBandColor:
+          ext.selectorBandColor ?? scheme.onSurface.withValues(alpha: 0.07),
+      selectorBandBorderColor: scheme.onSurface.withValues(alpha: 0.12),
+      useMagnifier: true,
+      magnification: 1.15,
+      overAndUnderCenterOpacity: 0.7,
       selectedItemColor: selectedItemColor,
       unselectedItemColor: unselectedItemColor,
       dayForegroundColor: dayForegroundColor,
       selectedDayBackgroundColor: selectedDayBackgroundColor,
       selectedDayForegroundColor: selectedDayForegroundColor,
+      selectedDayShadowColor:
+          selectedDayBackgroundColor.withValues(alpha: 0.28),
       todayColor: todayColor,
       disabledDayColor: disabledDayColor,
       eventMarkerColor: eventMarkerColor,
+      rangeHighlightColor: selectedDayBackgroundColor,
+      rangeFillOpacity: 0.2,
+      headerBottomBorderColor: headerTextColor.withValues(alpha: 0.08),
+      selectionAnimationDuration: const Duration(milliseconds: 180),
+      motionDuration: const Duration(milliseconds: 220),
       helpTextStyle: bake(
         TextStyle(
           color: headerTextColor,
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          letterSpacing: 1,
+          letterSpacing: 1.2,
         ),
         ext.helpTextStyle,
       ),
@@ -346,7 +363,9 @@ class DrumPickerTheme extends ThemeExtension<DrumPickerTheme> {
         TextStyle(
           color: headerTextColor,
           fontSize: 30,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w500,
+          letterSpacing: -0.5,
+          fontFeatures: tnum,
         ),
         ext.headlineTextStyle,
       ),
@@ -354,7 +373,9 @@ class DrumPickerTheme extends ThemeExtension<DrumPickerTheme> {
         TextStyle(
           color: headerTextColor,
           fontSize: 34,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w500,
+          letterSpacing: -0.5,
+          fontFeatures: tnum,
         ),
         ext.headlineTextStyle,
       ),
@@ -370,27 +391,46 @@ class DrumPickerTheme extends ThemeExtension<DrumPickerTheme> {
           color: unselectedItemColor,
           fontSize: 11,
           fontWeight: FontWeight.w600,
-          letterSpacing: 0.8,
+          letterSpacing: 1,
         ),
         ext.columnLabelTextStyle,
       ),
       selectedItemTextStyle: bake(
         TextStyle(
-          fontSize: 20,
+          fontSize: 19,
+          height: 1,
           fontWeight: FontWeight.w600,
           color: selectedItemColor,
+          fontFeatures: tnum,
         ),
         ext.selectedItemTextStyle,
       ),
       unselectedItemTextStyle: bake(
-        TextStyle(fontSize: 18, color: unselectedItemColor),
+        TextStyle(
+          fontSize: 18,
+          height: 1,
+          color: unselectedItemColor,
+          fontFeatures: tnum,
+        ),
         ext.unselectedItemTextStyle,
       ),
+      dayTextStyle: const TextStyle(fontSize: 14, fontFeatures: tnum),
+      daySubLabelTextStyle: TextStyle(
+        fontSize: 11,
+        height: 1.05,
+        fontWeight: FontWeight.w500,
+        color: unselectedItemColor.withValues(alpha: 0.75),
+      ),
+      weekdayLabelTextStyle: TextStyle(
+        fontSize: 12,
+        letterSpacing: 0.5,
+        color: unselectedItemColor,
+      ),
       dayShape: ext.dayShape ?? const CircleBorder(),
-      selectorBandRadius: ext.selectorBandRadius ?? 8.0,
+      selectorBandRadius: ext.selectorBandRadius ?? 12.0,
       headerPadding:
           ext.headerPadding ?? const EdgeInsets.fromLTRB(24, 16, 24, 12),
-      itemExtent: ext.itemExtent ?? 44.0,
+      itemExtent: ext.itemExtent ?? 52.0,
       visibleItemCount: ext.visibleItemCount ?? 5,
     );
   }
@@ -407,14 +447,24 @@ class DrumPickerResolved {
     required this.headerTextColor,
     required this.cardBackgroundColor,
     required this.selectorBandColor,
+    required this.selectorBandBorderColor,
+    required this.useMagnifier,
+    required this.magnification,
+    required this.overAndUnderCenterOpacity,
     required this.selectedItemColor,
     required this.unselectedItemColor,
     required this.dayForegroundColor,
     required this.selectedDayBackgroundColor,
     required this.selectedDayForegroundColor,
+    required this.selectedDayShadowColor,
     required this.todayColor,
     required this.disabledDayColor,
     required this.eventMarkerColor,
+    required this.rangeHighlightColor,
+    required this.rangeFillOpacity,
+    required this.headerBottomBorderColor,
+    required this.selectionAnimationDuration,
+    required this.motionDuration,
     required this.helpTextStyle,
     required this.headlineTextStyle,
     required this.timeHeadlineTextStyle,
@@ -422,6 +472,9 @@ class DrumPickerResolved {
     required this.columnLabelTextStyle,
     required this.selectedItemTextStyle,
     required this.unselectedItemTextStyle,
+    required this.dayTextStyle,
+    required this.daySubLabelTextStyle,
+    required this.weekdayLabelTextStyle,
     required this.dayShape,
     required this.selectorBandRadius,
     required this.headerPadding,
@@ -441,6 +494,18 @@ class DrumPickerResolved {
   /// Color of the highlight band over the centered drum item.
   final Color selectorBandColor;
 
+  /// Color of the hairline drawn at the top and bottom of the selection band.
+  final Color selectorBandBorderColor;
+
+  /// Whether the drum magnifies the centered item.
+  final bool useMagnifier;
+
+  /// The scale applied to the centered drum item when [useMagnifier] is true.
+  final double magnification;
+
+  /// The opacity of the non-centered drum rows, for a depth-of-field falloff.
+  final double overAndUnderCenterOpacity;
+
   /// Color of the centered (selected) drum item.
   final Color selectedItemColor;
 
@@ -456,6 +521,9 @@ class DrumPickerResolved {
   /// Foreground color of the selected calendar day.
   final Color selectedDayForegroundColor;
 
+  /// Soft shadow color cast by the selected calendar day chip.
+  final Color selectedDayShadowColor;
+
   /// Accent color used for "today" in the calendar grid.
   final Color todayColor;
 
@@ -464,6 +532,21 @@ class DrumPickerResolved {
 
   /// Default color of an event marker dot under a calendar day.
   final Color eventMarkerColor;
+
+  /// Base color of the soft fill behind days inside a selected range.
+  final Color rangeHighlightColor;
+
+  /// Opacity of the in-range fill.
+  final double rangeFillOpacity;
+
+  /// Color of the hairline separating the header from the body.
+  final Color headerBottomBorderColor;
+
+  /// Duration of the calendar day selection animation.
+  final Duration selectionAnimationDuration;
+
+  /// Duration of general transitions (mode switch, wheel sync).
+  final Duration motionDuration;
 
   /// Resolved text style of the help label.
   final TextStyle helpTextStyle;
@@ -485,6 +568,16 @@ class DrumPickerResolved {
 
   /// Resolved text style of the non-centered drum items.
   final TextStyle unselectedItemTextStyle;
+
+  /// Resolved base text style of a calendar day number (color and weight are
+  /// applied per state by the cell).
+  final TextStyle dayTextStyle;
+
+  /// Resolved text style of the weekday sub-line under a drum day number.
+  final TextStyle daySubLabelTextStyle;
+
+  /// Resolved text style of the calendar weekday header row.
+  final TextStyle weekdayLabelTextStyle;
 
   /// Resolved shape of a calendar day cell.
   final OutlinedBorder dayShape;

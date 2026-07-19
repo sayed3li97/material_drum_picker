@@ -11,6 +11,7 @@ import '../../utils/drum_date_utils.dart';
 import '../../utils/drum_locale_utils.dart';
 import '../../utils/drum_numerals.dart';
 import '../internal/drum_column.dart';
+import '../internal/drum_wheel_row.dart';
 
 /// Which drum column a slot renders, used to drop columns below day precision.
 enum _Col { day, month, year }
@@ -155,80 +156,80 @@ class _DrumModeWidgetState extends State<DrumModeWidget> {
     return null;
   }
 
-  DrumColumn _buildDayColumn() {
+  (String, DrumColumn) _buildDayColumn() {
     final dayCount = widget.system.daysInMonth(_year, _month);
-    return DrumColumn(
-      key: const ValueKey('drum-day'),
-      label: widget.labels.dayColumn,
-      itemCount: dayCount,
-      selectedIndex: _day - 1,
-      tokens: widget.tokens,
-      onSelectedItemChanged: (index) {
-        _day = index + 1;
-        _onColumnChanged();
-      },
-      itemBuilder: (index) {
-        final day = index + 1;
-        final number = DrumNumerals.format(day, _localeName);
-        if (!widget.showDayOfWeek) return number;
-        final dow = DateFormat.E(_localeName)
-            .format(widget.system.encode(_year, _month, day));
-        return '$number\n$dow';
-      },
-      semanticLabelBuilder: (index) {
-        final day = index + 1;
-        return DateFormat.MMMMEEEEd(_localeName)
-            .format(widget.system.encode(_year, _month, day));
-      },
-    );
-  }
-
-  DrumColumn _buildMonthColumn() {
-    return DrumColumn(
-      key: const ValueKey('drum-month'),
-      label: widget.labels.monthColumn,
-      itemCount: widget.system.monthsInYear(_year),
-      selectedIndex: _month - 1,
-      tokens: widget.tokens,
-      onSelectedItemChanged: (index) {
-        _month = index + 1;
-        _onColumnChanged();
-      },
-      itemBuilder: (index) => widget.system.monthLabel(
-        _year,
-        index + 1,
-        numeric: widget.monthFormat == DrumMonthFormat.numeric,
-        abbreviated: true,
-        locale: widget.locale,
-      ),
-      // The screen reader announces the full month label, including the leap
-      // marker for calendars that have one.
-      semanticLabelBuilder: (index) => widget.system.monthLabel(
-        _year,
-        index + 1,
-        numeric: false,
-        abbreviated: false,
-        locale: widget.locale,
+    return (
+      widget.labels.dayColumn,
+      DrumColumn(
+        key: const ValueKey('drum-day'),
+        itemCount: dayCount,
+        selectedIndex: _day - 1,
+        tokens: widget.tokens,
+        onSelectedItemChanged: (index) {
+          _day = index + 1;
+          _onColumnChanged();
+        },
+        itemBuilder: (index) => DrumNumerals.format(index + 1, _localeName),
+        subLabelBuilder: widget.showDayOfWeek
+            ? (index) => DateFormat.E(_localeName)
+                .format(widget.system.encode(_year, _month, index + 1))
+            : null,
+        semanticLabelBuilder: (index) => DateFormat.MMMMEEEEd(_localeName)
+            .format(widget.system.encode(_year, _month, index + 1)),
       ),
     );
   }
 
-  DrumColumn _buildYearColumn() {
+  (String, DrumColumn) _buildMonthColumn() {
+    return (
+      widget.labels.monthColumn,
+      DrumColumn(
+        key: const ValueKey('drum-month'),
+        itemCount: widget.system.monthsInYear(_year),
+        selectedIndex: _month - 1,
+        tokens: widget.tokens,
+        onSelectedItemChanged: (index) {
+          _month = index + 1;
+          _onColumnChanged();
+        },
+        itemBuilder: (index) => widget.system.monthLabel(
+          _year,
+          index + 1,
+          numeric: widget.monthFormat == DrumMonthFormat.numeric,
+          abbreviated: true,
+          locale: widget.locale,
+        ),
+        // The screen reader announces the full month label, including the leap
+        // marker for calendars that have one.
+        semanticLabelBuilder: (index) => widget.system.monthLabel(
+          _year,
+          index + 1,
+          numeric: false,
+          abbreviated: false,
+          locale: widget.locale,
+        ),
+      ),
+    );
+  }
+
+  (String, DrumColumn) _buildYearColumn() {
     final yearCount = _lastYear - _firstYear + 1;
-    return DrumColumn(
-      key: const ValueKey('drum-year'),
-      label: widget.labels.yearColumn,
-      itemCount: yearCount,
-      selectedIndex: _year - _firstYear,
-      tokens: widget.tokens,
-      onSelectedItemChanged: (index) {
-        _year = _firstYear + index;
-        _onColumnChanged();
-      },
-      itemBuilder: (index) =>
-          DrumNumerals.format(_firstYear + index, _localeName),
-      semanticLabelBuilder: (index) =>
-          DrumNumerals.format(_firstYear + index, _localeName),
+    return (
+      widget.labels.yearColumn,
+      DrumColumn(
+        key: const ValueKey('drum-year'),
+        itemCount: yearCount,
+        selectedIndex: _year - _firstYear,
+        tokens: widget.tokens,
+        onSelectedItemChanged: (index) {
+          _year = _firstYear + index;
+          _onColumnChanged();
+        },
+        itemBuilder: (index) =>
+            DrumNumerals.format(_firstYear + index, _localeName),
+        semanticLabelBuilder: (index) =>
+            DrumNumerals.format(_firstYear + index, _localeName),
+      ),
     );
   }
 
@@ -243,14 +244,14 @@ class _DrumModeWidgetState extends State<DrumModeWidget> {
     }
   }
 
-  List<Widget> _orderedColumns() {
+  List<(String, DrumColumn)> _orderedColumns() {
     final order = switch (widget.columnOrder) {
       DrumColumnOrder.dmy => const [_Col.day, _Col.month, _Col.year],
       DrumColumnOrder.mdy => const [_Col.month, _Col.day, _Col.year],
       DrumColumnOrder.ymd => const [_Col.year, _Col.month, _Col.day],
       DrumColumnOrder.ydm => const [_Col.year, _Col.day, _Col.month],
     };
-    final columns = <Widget>[];
+    final columns = <(String, DrumColumn)>[];
     for (final c in order) {
       if (!_isActive(c)) continue;
       columns.add(switch (c) {
@@ -266,10 +267,7 @@ class _DrumModeWidgetState extends State<DrumModeWidget> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: _orderedColumns(),
-      ),
+      child: DrumWheelRow(columns: _orderedColumns(), tokens: widget.tokens),
     );
   }
 }

@@ -13,6 +13,12 @@ aware date modes (drum, calendar, and keyboard input).
 
 ## Showcase
 
+A refined, premium default look: a single continuous magnified drum band with
+tabular figures, and a calendar whose selected day lifts with a soft shadow, in
+light and dark.
+
+![material_drum_picker premium drum and calendar](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/premium.png)
+
 Every look below is rendered straight from the package: the drum mode (with
 day of week), the calendar mode (quick selects plus disabled weekends), the
 keyboard input mode, a combined date and time picker, and a dark theme.
@@ -20,7 +26,8 @@ keyboard input mode, a combined date and time picker, and a dark theme.
 ![material_drum_picker showcase](https://raw.githubusercontent.com/sayed3li97/material_drum_picker/main/doc/screenshots/showcase.png)
 
 Run the live demo for every option with `cd example && flutter run`, then open
-the **Showcase** screen.
+the **Showcase** screen. Everything stays fully themeable through
+`DrumPickerTheme` if you want a different look.
 
 ## Features
 

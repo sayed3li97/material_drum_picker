@@ -21,23 +21,24 @@ class _DrumScrollBehavior extends MaterialScrollBehavior {
 
 /// A single scrollable drum-wheel column (day, month or year).
 ///
-/// Exposed (non-private) so that widget tests can locate columns and read their
-/// [label]. It is **not** part of the public package API.
+/// This renders only the wheel; the column header label and the shared
+/// selection band are drawn by the parent so the band can span all columns
+/// continuously and stay centered on the wheel row.
+///
+/// Exposed (non-private) so that widget tests can locate columns. It is **not**
+/// part of the public package API.
 class DrumColumn extends StatefulWidget {
   /// Creates a drum column.
   const DrumColumn({
     super.key,
-    required this.label,
     required this.itemCount,
     required this.selectedIndex,
     required this.itemBuilder,
     required this.onSelectedItemChanged,
     required this.tokens,
+    this.subLabelBuilder,
     this.semanticLabelBuilder,
   });
-
-  /// The uppercase column header (e.g. `DAY`, `MONTH`, `YEAR`).
-  final String label;
 
   /// The number of items in this column.
   final int itemCount;
@@ -45,8 +46,12 @@ class DrumColumn extends StatefulWidget {
   /// The currently selected item index.
   final int selectedIndex;
 
-  /// Builds the (text) label for the item at [index].
+  /// Builds the primary (numeral) label for the item at [index].
   final String Function(int index) itemBuilder;
+
+  /// Optional secondary line under the numeral (for example a weekday). When
+  /// non null the item renders as a tight two-line cell.
+  final String? Function(int index)? subLabelBuilder;
 
   /// Called when the centered item changes after a scroll settles.
   final ValueChanged<int> onSelectedItemChanged;
@@ -63,6 +68,11 @@ class DrumColumn extends StatefulWidget {
 
 class _DrumColumnState extends State<DrumColumn> {
   late FixedExtentScrollController _controller;
+
+  // True while the wheel is being moved programmatically (an external date
+  // change), so the intermediate item crossings do not fire haptics or emit
+  // spurious onChanged values.
+  bool _programmatic = false;
 
   @override
   void initState() {
@@ -82,14 +92,20 @@ class _DrumColumnState extends State<DrumColumn> {
         if (!mounted || !_controller.hasClients) return;
         final reduceMotion =
             MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+        _programmatic = true;
         if (reduceMotion) {
           _controller.jumpToItem(widget.selectedIndex);
+          if (mounted) _programmatic = false;
         } else {
-          _controller.animateToItem(
+          _controller
+              .animateToItem(
             widget.selectedIndex,
-            duration: const Duration(milliseconds: 250),
+            duration: widget.tokens.motionDuration,
             curve: Curves.easeOutCubic,
-          );
+          )
+              .whenComplete(() {
+            if (mounted) _programmatic = false;
+          });
         }
       });
     }
@@ -101,74 +117,73 @@ class _DrumColumnState extends State<DrumColumn> {
     super.dispose();
   }
 
+  Widget _buildItem(int index) {
+    final tokens = widget.tokens;
+    final isSelected = index == widget.selectedIndex;
+    final numberStyle = isSelected
+        ? tokens.selectedItemTextStyle
+        : tokens.unselectedItemTextStyle;
+    final sub = widget.subLabelBuilder?.call(index);
+    final Widget visual;
+    if (sub == null) {
+      visual = Text(widget.itemBuilder(index), style: numberStyle);
+    } else {
+      visual = Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            widget.itemBuilder(index),
+            style: numberStyle,
+            strutStyle: const StrutStyle(height: 1, forceStrutHeight: true),
+          ),
+          Text(
+            sub,
+            textAlign: TextAlign.center,
+            style: tokens.daySubLabelTextStyle,
+            strutStyle: const StrutStyle(height: 1.05, forceStrutHeight: true),
+          ),
+        ],
+      );
+    }
+    return Semantics(
+      label: widget.semanticLabelBuilder?.call(index),
+      selected: isSelected,
+      child: ExcludeSemantics(child: Center(child: visual)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = widget.tokens;
-    final selectedStyle = tokens.selectedItemTextStyle;
-    final unselectedStyle = tokens.unselectedItemTextStyle;
-
     return Expanded(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Text(widget.label, style: tokens.columnLabelTextStyle),
+      child: ScrollConfiguration(
+        behavior: const _DrumScrollBehavior(),
+        child: ListWheelScrollView.useDelegate(
+          controller: _controller,
+          itemExtent: tokens.itemExtent,
+          physics: const FixedExtentScrollPhysics(),
+          useMagnifier: tokens.useMagnifier,
+          magnification: tokens.magnification,
+          overAndUnderCenterOpacity: tokens.overAndUnderCenterOpacity,
+          diameterRatio: 2.0,
+          perspective: 0.0025,
+          squeeze: 1.05,
+          onSelectedItemChanged: (index) {
+            if (_programmatic) return;
+            HapticFeedback.selectionClick();
+            widget.onSelectedItemChanged(index);
+          },
+          // ListDelegate (not looping) — the item count changes when the
+          // month/year changes, so looping math would break.
+          childDelegate: ListWheelChildBuilderDelegate(
+            childCount: widget.itemCount,
+            builder: (context, index) {
+              if (index < 0 || index >= widget.itemCount) return null;
+              return _buildItem(index);
+            },
           ),
-          SizedBox(
-            height: tokens.itemExtent * tokens.visibleItemCount,
-            child: Stack(
-              children: [
-                // Center highlight band.
-                Positioned.fill(
-                  child: Center(
-                    child: Container(
-                      height: tokens.itemExtent,
-                      decoration: BoxDecoration(
-                        color: tokens.selectorBandColor,
-                        borderRadius:
-                            BorderRadius.circular(tokens.selectorBandRadius),
-                      ),
-                    ),
-                  ),
-                ),
-                ScrollConfiguration(
-                  behavior: const _DrumScrollBehavior(),
-                  child: ListWheelScrollView.useDelegate(
-                    controller: _controller,
-                    itemExtent: tokens.itemExtent,
-                    physics: const FixedExtentScrollPhysics(),
-                    perspective: 0.003,
-                    diameterRatio: 1.6,
-                    onSelectedItemChanged: (index) {
-                      HapticFeedback.selectionClick();
-                      widget.onSelectedItemChanged(index);
-                    },
-                    // ListDelegate (not looping) — the item count changes when
-                    // the month/year changes, so looping math would break.
-                    childDelegate: ListWheelChildBuilderDelegate(
-                      childCount: widget.itemCount,
-                      builder: (context, index) {
-                        if (index < 0 || index >= widget.itemCount) return null;
-                        final isSelected = index == widget.selectedIndex;
-                        return Semantics(
-                          label: widget.semanticLabelBuilder?.call(index),
-                          selected: isSelected,
-                          child: Center(
-                            child: Text(
-                              widget.itemBuilder(index),
-                              style:
-                                  isSelected ? selectedStyle : unselectedStyle,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

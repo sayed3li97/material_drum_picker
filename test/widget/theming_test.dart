@@ -46,17 +46,17 @@ void main() {
   });
 
   group('DrumPickerTheme.resolve defaults', () {
-    testWidgets('preserve the historic fixed values', (tester) async {
+    testWidgets('use the resolved default values', (tester) async {
       final r = await _resolve(tester);
-      expect(r.itemExtent, 44.0);
+      expect(r.itemExtent, 52.0);
       expect(r.visibleItemCount, 5);
-      expect(r.selectorBandRadius, 8.0);
+      expect(r.selectorBandRadius, 12.0);
       expect(r.dayShape, isA<CircleBorder>());
       expect(r.headerPadding, const EdgeInsets.fromLTRB(24, 16, 24, 12));
       expect(r.helpTextStyle.fontSize, 12);
       expect(r.headlineTextStyle.fontSize, 30);
       expect(r.timeHeadlineTextStyle.fontSize, 34);
-      expect(r.selectedItemTextStyle.fontSize, 20);
+      expect(r.selectedItemTextStyle.fontSize, 19);
       expect(r.unselectedItemTextStyle.fontSize, 18);
       expect(r.columnLabelTextStyle.fontSize, 11);
     });
@@ -139,7 +139,10 @@ void main() {
       ));
       await tester.pumpAndSettle();
       final found = find.byWidgetPredicate(
-        (w) => w is Container && w.color == headerColor,
+        (w) =>
+            w is Container &&
+            w.decoration is BoxDecoration &&
+            (w.decoration! as BoxDecoration).color == headerColor,
       );
       expect(found, findsOneWidget);
     });

@@ -5,6 +5,7 @@ import '../../models/drum_picker_labels.dart';
 import '../../theme/drum_picker_theme.dart';
 import '../../utils/drum_date_utils.dart';
 import 'drum_column.dart';
+import 'drum_wheel_row.dart';
 
 /// A compact drum strip for choosing a time: hour, minute, and (in 12-hour
 /// mode) an AM/PM column.
@@ -110,7 +111,6 @@ class _TimeStripState extends State<TimeStrip> {
   Widget build(BuildContext context) {
     final hourColumn = DrumColumn(
       key: const ValueKey('time-hour'),
-      label: widget.labels.hourColumn,
       itemCount: widget.use24hFormat ? 24 : 12,
       selectedIndex: widget.use24hFormat
           ? _hour
@@ -124,7 +124,6 @@ class _TimeStripState extends State<TimeStrip> {
 
     final minuteColumn = DrumColumn(
       key: const ValueKey('time-minute'),
-      label: widget.labels.minuteColumn,
       itemCount: _minuteCount,
       selectedIndex: _minute ~/ widget.minuteInterval,
       tokens: widget.tokens,
@@ -135,26 +134,28 @@ class _TimeStripState extends State<TimeStrip> {
           '${index * widget.minuteInterval} minutes',
     );
 
-    final columns = <Widget>[hourColumn, minuteColumn];
+    final columns = <(String, DrumColumn)>[
+      (widget.labels.hourColumn, hourColumn),
+      (widget.labels.minuteColumn, minuteColumn),
+    ];
     if (!widget.use24hFormat) {
-      columns.add(DrumColumn(
-        key: const ValueKey('time-meridiem'),
-        label: widget.labels.meridiemColumn,
-        itemCount: 2,
-        selectedIndex: _isPm ? 1 : 0,
-        tokens: widget.tokens,
-        onSelectedItemChanged: _onMeridiemChanged,
-        itemBuilder: (index) => _meridiemLabel(index == 1),
-        semanticLabelBuilder: (index) => _meridiemLabel(index == 1),
+      columns.add((
+        widget.labels.meridiemColumn,
+        DrumColumn(
+          key: const ValueKey('time-meridiem'),
+          itemCount: 2,
+          selectedIndex: _isPm ? 1 : 0,
+          tokens: widget.tokens,
+          onSelectedItemChanged: _onMeridiemChanged,
+          itemBuilder: (index) => _meridiemLabel(index == 1),
+          semanticLabelBuilder: (index) => _meridiemLabel(index == 1),
+        ),
       ));
     }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: columns,
-      ),
+      child: DrumWheelRow(columns: columns, tokens: widget.tokens),
     );
   }
 }

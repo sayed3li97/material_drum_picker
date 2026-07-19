@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_drum_picker/material_drum_picker.dart';
-import 'package:material_drum_picker/src/widgets/internal/drum_column.dart';
 
 import '../helpers.dart';
+
+/// The order of the column header labels currently on screen.
+List<String?> _headerOrder(WidgetTester tester) => tester
+    .widgetList<Text>(find.byType(Text))
+    .map((t) => t.data)
+    .where((d) => d == 'DAY' || d == 'MONTH' || d == 'YEAR')
+    .toList();
 
 void main() {
   testWidgets('columnOrder.dmy shows the Day column first', (tester) async {
@@ -16,12 +22,7 @@ void main() {
     )));
     await tester.pumpAndSettle();
 
-    final cols =
-        tester.widgetList<DrumColumn>(find.byType(DrumColumn)).toList();
-    expect(cols.length, 3);
-    expect(cols[0].label, 'DAY');
-    expect(cols[1].label, 'MONTH');
-    expect(cols[2].label, 'YEAR');
+    expect(_headerOrder(tester), ['DAY', 'MONTH', 'YEAR']);
   });
 
   testWidgets('columnOrder.ymd shows the Year column first', (tester) async {
@@ -34,11 +35,7 @@ void main() {
     )));
     await tester.pumpAndSettle();
 
-    final cols =
-        tester.widgetList<DrumColumn>(find.byType(DrumColumn)).toList();
-    expect(cols[0].label, 'YEAR');
-    expect(cols[1].label, 'MONTH');
-    expect(cols[2].label, 'DAY');
+    expect(_headerOrder(tester), ['YEAR', 'MONTH', 'DAY']);
   });
 
   testWidgets('French locale shows French month names', (tester) async {
