@@ -104,10 +104,8 @@ class DayCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color background = Colors.transparent;
     Color foreground = tokens.dayForegroundColor;
     if (isSelected) {
-      background = tokens.selectedDayBackgroundColor;
       foreground = tokens.selectedDayForegroundColor;
     } else if (!isEnabled) {
       foreground = tokens.disabledDayColor;
@@ -115,20 +113,21 @@ class DayCell extends StatelessWidget {
       foreground = tokens.todayColor;
     }
 
-    if (isInRange && !isSelected && isEnabled) {
-      // An in-range day that is not an endpoint keeps the normal foreground.
-      foreground = tokens.dayForegroundColor;
-    }
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final animDuration =
+        reduceMotion ? Duration.zero : tokens.selectionAnimationDuration;
 
+    // Today (when not selected) gets a thicker accent ring on the day shape.
     final shape = isToday && !isSelected
-        ? tokens.dayShape.copyWith(side: BorderSide(color: tokens.todayColor))
+        ? tokens.dayShape
+            .copyWith(side: BorderSide(color: tokens.todayColor, width: 1.5))
         : tokens.dayShape;
 
     final markerRow = _buildMarkers(context);
 
-    // The day circle with its number and any event markers.
-    Widget cell = Material(
-      color: background,
+    final content = Material(
+      type: MaterialType.transparency,
       shape: shape,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -137,18 +136,58 @@ class DayCell extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             Center(
-              child: Text(
-                label ?? '$day',
-                style: TextStyle(
-                  color: foreground,
-                  fontWeight: isSelected || isToday ? FontWeight.w600 : null,
-                ),
+              child: AnimatedDefaultTextStyle(
+                duration: animDuration,
+                curve: Curves.easeOutCubic,
+                // Merge over the ambient default so the app's font family is
+                // kept (AnimatedDefaultTextStyle otherwise replaces it).
+                style: DefaultTextStyle.of(context)
+                    .style
+                    .merge(tokens.dayTextStyle)
+                    .copyWith(
+                      color: foreground,
+                      fontWeight: isSelected || isToday
+                          ? FontWeight.w600
+                          : FontWeight.w400,
+                    ),
+                child: Text(label ?? '$day'),
               ),
             ),
             if (markerRow != null) Positioned(bottom: 5, child: markerRow),
           ],
         ),
       ),
+    );
+
+    // The selection chip: an animated fill with a soft lift shadow, using the
+    // themed day shape (not a hardcoded circle) so a custom shape still works.
+    // A DecoratedBox (not AnimatedContainer) keeps the widget tree free of an
+    // extra Container so tests can count marker dots cleanly.
+    Widget cell = TweenAnimationBuilder<double>(
+      tween: Tween<double>(end: isSelected ? 1 : 0),
+      duration: animDuration,
+      curve: Curves.easeOutCubic,
+      child: content,
+      builder: (context, t, child) {
+        return DecoratedBox(
+          decoration: ShapeDecoration(
+            shape: shape,
+            color: Color.lerp(
+                Colors.transparent, tokens.selectedDayBackgroundColor, t),
+            shadows: t > 0
+                ? [
+                    BoxShadow(
+                      color: tokens.selectedDayShadowColor.withValues(
+                          alpha: tokens.selectedDayShadowColor.a * t),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: child,
+        );
+      },
     );
 
     if (isInRange) {
@@ -159,7 +198,8 @@ class DayCell extends StatelessWidget {
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: tokens.selectedDayBackgroundColor.withValues(alpha: 0.2),
+                color: tokens.rangeHighlightColor
+                    .withValues(alpha: tokens.rangeFillOpacity),
                 borderRadius: BorderRadius.circular(8),
               ),
             ),

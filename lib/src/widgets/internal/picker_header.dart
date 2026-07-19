@@ -37,10 +37,19 @@ class PickerHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hairline = 1 / MediaQuery.devicePixelRatioOf(context);
     return Container(
       width: double.infinity,
-      color: tokens.headerBackgroundColor,
       padding: tokens.headerPadding,
+      decoration: BoxDecoration(
+        color: tokens.headerBackgroundColor,
+        border: Border(
+          bottom: BorderSide(
+            color: tokens.headerBottomBorderColor,
+            width: hairline,
+          ),
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,

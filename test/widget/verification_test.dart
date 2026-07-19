@@ -248,7 +248,10 @@ void main() {
           theme: const DrumPickerTheme(headerBackgroundColor: headerColor))));
       await tester.pumpAndSettle();
       expect(
-        find.byWidgetPredicate((w) => w is Container && w.color == headerColor),
+        find.byWidgetPredicate((w) =>
+            w is Container &&
+            w.decoration is BoxDecoration &&
+            (w.decoration! as BoxDecoration).color == headerColor),
         findsOneWidget,
       );
     });

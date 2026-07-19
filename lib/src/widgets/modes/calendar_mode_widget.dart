@@ -348,8 +348,8 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
         color:
             isSelected ? tokens.selectedDayBackgroundColor : Colors.transparent,
         shape: isToday && !isSelected
-            ? const StadiumBorder()
-                .copyWith(side: BorderSide(color: tokens.todayColor))
+            ? const StadiumBorder().copyWith(
+                side: BorderSide(color: tokens.todayColor, width: 1.5))
             : const StadiumBorder(),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -388,7 +388,7 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
             child: Center(
               child: Text(
                 narrow[(firstDay + i) % 7],
-                style: Theme.of(context).textTheme.bodySmall,
+                style: widget.tokens.weekdayLabelTextStyle,
               ),
             ),
           ),
@@ -469,7 +469,8 @@ class _CalendarModeWidgetState extends State<CalendarModeWidget> {
         color:
             isSelected ? tokens.selectedDayBackgroundColor : Colors.transparent,
         shape: isToday && !isSelected
-            ? StadiumBorder(side: BorderSide(color: tokens.todayColor))
+            ? StadiumBorder(
+                side: BorderSide(color: tokens.todayColor, width: 1.5))
             : const StadiumBorder(),
         clipBehavior: Clip.antiAlias,
         child: InkWell(

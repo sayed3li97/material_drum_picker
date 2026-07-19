@@ -33,6 +33,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(DrumPicker), findsOneWidget);
 
+    await tester.ensureVisible(find.text('OK'));
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
     expect(result, DateTime(2024, 6, 15));

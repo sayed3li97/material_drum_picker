@@ -258,7 +258,7 @@ class _DrumPickerDialog extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 360, maxHeight: 560),
+        constraints: const BoxConstraints(maxWidth: 360, maxHeight: 640),
         child: SingleChildScrollView(
           child: DrumPicker(
             initialDate: initialDate,

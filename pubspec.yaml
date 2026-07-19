@@ -2,7 +2,7 @@ name: material_drum_picker
 description: >-
   A Material 3 date picker with an iOS-style drum roller, full API parity with
   showDatePicker and CupertinoDatePicker, and drum, calendar and input modes.
-version: 1.13.0
+version: 1.14.0
 homepage: https://github.com/sayed3li97/material_drum_picker
 repository: https://github.com/sayed3li97/material_drum_picker
 issue_tracker: https://github.com/sayed3li97/material_drum_picker/issues
@@ -15,6 +15,9 @@ topics:
   - widget
 
 screenshots:
+  - description: >-
+      The polished drum and calendar date picker in light and dark themes.
+    path: doc/screenshots/premium.png
   - description: >-
       Drum, calendar, and keyboard input date modes, a combined date and time
       picker, and a dark theme.
@@ -42,8 +45,6 @@ screenshots:
   - description: >-
       Drop-in replacements for the Material and Cupertino date pickers.
     path: doc/screenshots/dropin.png
-  - description: Month as a name or number, and configurable typed date formats.
-    path: doc/screenshots/formats.png
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
